@@ -1,0 +1,43 @@
+@import url('https://rsms.me/inter/inter-ui.css');
+::selection{background:#2D2F36}
+::-webkit-selection{background:#2D2F36}
+::-moz-selection{background:#2D2F36}
+body{background-color:rgba(0,0,0,.6);background-size:cover;background-image:url("https://mediosconvalor.github.io/mcv/img/background/clientes.jpg");background-repeat:no-repeat;font-family:'Inter UI',sans-serif;margin:0;padding:0}
+body:before{content:'';position:fixed;top:0;bottom:0;left:0;right:0;background-color:rgba(52,57,71,.9)}
+.page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;position:relative;width:100%}
+@media (max-width:767px){.page{padding:12px}}
+.container{display:flex;margin:0 auto;width:100%;max-width:640px;background:transparent}
+@media (max-width:767px){.container{flex-direction:column;width:100%}}
+.left{background:#fff;position:relative;width:50%;padding:24px}
+@media (max-width:767px){.left{width:100%;padding:16px}}
+.login{margin:0;display:flex;align-items:center;justify-content:center}
+.login img{max-width:100%;height:auto}
+.right{background:#474A59;box-shadow:0 0 40px 16px rgba(0,0,0,.22);color:#F1F1F2;position:relative;width:50%;padding:24px}
+@media (max-width:767px){.right{width:100%;padding:16px}}
+svg{position:absolute;width:100%;max-width:320px}
+path{fill:none;stroke:url(#linearGradient);stroke-width:4;stroke-dasharray:240 1386}
+.form{margin:0;position:relative}
+label{color:#c2c2c5;display:block;font-size:14px;height:16px;margin-top:20px;margin-bottom:5px}
+input{background:transparent;background-color:#343947;border:0;border-radius:10px;color:#fff;font-size:20px;height:30px;line-height:30px;outline:none!important;width:100%}
+input::-moz-focus-inner{border:0}
+#submit{padding:10px 20px;background-color:#00DC2A;color:#343947;border:2px solid #fff;border-radius:30px;height:50px;cursor:pointer;margin-top:24px;transition:color 300ms}
+#submit:hover{background-color:#fff}
+@media (max-width:767px){svg{display:none}}
+
+.forgot-password{margin-top:24px;font-size:14px}
+.forgot-password a{color:#00DC2A;text-decoration:none}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal-content{background:#fff;color:#0b1222;border-radius:12px;max-width:520px;width:90%;padding:16px;border:1px solid #e2e8f0}
+.modal-title{font-weight:700;margin-bottom:8px}
+.modal-body{margin-bottom:12px;line-height:1.4}
+
+@media (min-width:768px){
+  .container{max-width:720px}
+  .left{padding:0;min-height:380px;display:flex;align-items:center;justify-content:center}
+  .login{margin:0}
+  .right{padding:0;min-height:380px}
+  .form{margin:40px;position:absolute}
+  svg{display:block;position:absolute;width:320px;top:8px}
+}
+#submit:hover{background-color:#fff}
