@@ -47,12 +47,7 @@ switch(rtrim($uri,'/')){
     require dirname(__DIR__).'/views/pages/admin/clientes_editar.php';
     break;
   default:
-    if(!isset($_SESSION['is_admin'])){ $_SESSION['is_admin']=false; }
-    if(!headers_sent()){
-      header('Location: '.($_SESSION['is_admin']?'/admin':'/'));
-    } else {
-      echo '<script>location.href='.(isset($_SESSION['is_admin'])&&$_SESSION['is_admin']?"'\/admin'":"'\/'").';</script>';
-    }
-    exit;
+    http_response_code(404);
+    echo '404';
 }
 

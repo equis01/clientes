@@ -33,15 +33,5 @@ document.addEventListener('DOMContentLoaded',function(){
   var saved=localStorage.getItem('theme');
   applyTheme(saved?saved:'light');
   if(themeBtn){ themeBtn.addEventListener('click',function(){ var current=document.documentElement.classList.contains('theme-dark')?'dark':'light'; var next=current==='dark'?'light':'dark'; localStorage.setItem('theme',next); applyTheme(next); }); }
-  if('serviceWorker' in navigator){
-    window.addEventListener('load',function(){
-      navigator.serviceWorker.register('/sw.js').then(function(reg){
-        function promptUpdate(){ if(confirm('Hay una actualización del portal. ¿Refrescar ahora?')){ if(reg.waiting){ reg.waiting.postMessage({type:'SKIP_WAITING'}); } } }
-        if(reg.waiting){ promptUpdate(); }
-        reg.addEventListener('updatefound',function(){ var sw=reg.installing; if(!sw) return; sw.addEventListener('statechange',function(){ if(sw.state==='installed'){ if(navigator.serviceWorker.controller){ promptUpdate(); } } }); });
-        var refreshing=false; navigator.serviceWorker.addEventListener('controllerchange',function(){ if(refreshing) return; refreshing=true; location.reload(); });
-      }).catch(function(){});
-    });
-  }
 });
 </script>

@@ -59,7 +59,7 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
       <div class="field"><label>Correo<input class="input" type="email" name="email" value="<?php echo htmlspecialchars($dataUser['email']??''); ?>"></label></div>
       <div class="field"><label>Alias<input class="input" type="text" name="alias" value="<?php echo htmlspecialchars($dataUser['alias']??''); ?>"></label></div>
       <div class="field"><label>Valida<select class="input" name="valid"><option value="1" <?php echo intval($dataUser['valid']??0)===1?'selected':''; ?>>Sí</option><option value="0" <?php echo intval($dataUser['valid']??0)===0?'selected':''; ?>>No</option></select></label></div>
-      <div class="field"><label>Portal activo<select class="input" name="portal"><option value="1">Sí</option><option value="0">No</option></select></label></div>
+      <div class="field"><label>Portal activo<select class="input" name="portal"><option value="1" <?php echo intval($dataUser['portal_enabled']??1)===1?'selected':''; ?>>Sí</option><option value="0" <?php echo intval($dataUser['portal_enabled']??1)===0?'selected':''; ?>>No</option></select></label></div>
       <div class="actions"><button type="submit" class="btn">Guardar</button><a class="btn secondary" href="/admin">Volver</a></div>
     </form>
   </div>
