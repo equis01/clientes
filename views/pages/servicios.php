@@ -15,6 +15,15 @@ if(isset($_GET['generate_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
   $drive=isset($_SESSION['folder_url'])?$_SESSION['folder_url']:null;
   $insecure=isset($_POST['insecure']);
   $usuario=(isset($_SESSION['user'])?$_SESSION['user']:null);
+  $nowSrv=new DateTime('now', new DateTimeZone($tzTmp));
+  $daySrv=(int)$nowSrv->format('d');
+  $curMSrv=(int)$nowSrv->format('m');
+  $curYSrv=(int)$nowSrv->format('Y');
+  $selM=(int)preg_replace('/\D/','',$mesReq);
+  $selY=(int)preg_replace('/\D/','',$anioReq);
+  $prevM=$curMSrv===1?12:($curMSrv-1);
+  $prevY=$curMSrv===1?($curYSrv-1):$curYSrv;
+  if($selM===$prevM && $selY===$prevY && $daySrv<=3){ echo json_encode(['ok'=>false,'error'=>'Disponible a partir del día 4 del mes actual']); exit; }
   $gen=gas_generate_report($alias,$mesReq,$anioReq,$drive,$insecure,$usuario);
   echo json_encode($gen);
   exit;
@@ -182,6 +191,13 @@ $gasReal=$res['url'];
       var m=(mSel&&mSel.value)|| (mSel&&mSel.dataset.default)|| '';
       var y=aSel?aSel.value:'';
       if(!m||!y){ alert('Selecciona mes y año'); return; }
+      try{
+        var now=new Date();
+        var d=now.getDate();
+        var cm=now.getMonth()+1; var cy=now.getFullYear();
+        var pm=cm===1?12:(cm-1); var py=cm===1?(cy-1):cy;
+        if(parseInt(m,10)===pm && parseInt(y,10)===py && d<=3){ alert('Disponible a partir del día 4 del mes actual'); return; }
+      }catch(_){}
       gen.disabled=true; gen.textContent='Generando...';
       if(modal){ modal.style.display='flex'; }
       loader.classList.remove('hidden');

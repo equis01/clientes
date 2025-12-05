@@ -21,10 +21,7 @@ document.addEventListener('DOMContentLoaded',function(){
     .then(function(data){
       if(data&&data.ok){
         var uname=document.getElementById('username').value.trim();
-        var url=(data&&data.folder_url)?String(data.folder_url):'';
         if(data.admin){ window.location.href='/admin'; return; }
-        if(uname && uname.charAt(0).toUpperCase()==='Q'){ window.location.href='/portal'; return; }
-        if(url){ window.location.href=url; return; }
         window.location.href='/portal';
       }else{
         if(data && data.code==='portal_disabled'){

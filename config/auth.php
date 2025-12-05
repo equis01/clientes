@@ -187,11 +187,35 @@ if($isQ){
       $url=isset($data['url'])?$data['url']:'';
       $ok=!empty($data['ok']);
       if(!$ok || $url===''){ echo '{"ok":false,"error":"Credenciales inválidas"}'; exit; }
+      $_SESSION['user']=$username; $_SESSION['client_name']=$username; $_SESSION['folder_url']=$url; $_SESSION['is_admin']=false;
+      $usersBase=env('GAS_USERS_Q_URL');
+      if($usersBase){
+        $uurl=$usersBase.'?action=users&user='.urlencode($username);
+        $ur=http_get_raw($uurl,false); if($ur['raw']===false||$ur['raw']===null){ $ur=http_get_raw($uurl,true); }
+        $ud=$ur['raw']?json_decode($ur['raw'],true):null;
+        if(is_array($ud) && !empty($ud['ok'])){
+          $users=is_array($ud['users']??null)?$ud['users']:[]; $uu=is_array($users[$username]??null)?$users[$username]:null;
+          if(!$uu && is_array($users)){ foreach($users as $k=>$v){ if(strcasecmp((string)$k,(string)$username)===0){ $uu=is_array($v)?$v:null; break; } } }
+          if($uu){ $alias=trim((string)($uu['alias']??'')); $drv=trim((string)($uu['drive_url']??'')); if($alias!==''){ $_SESSION['client_name']=$alias; } if($drv!==''){ $_SESSION['folder_url']=$drv; } }
+        }
+      }
       echo json_encode(['ok'=>true,'admin'=>false,'is_q'=>false,'folder_url'=>$url]);
       exit;
     } else {
       if(strtolower($text)==='null'){echo '{"ok":false,"error":"Portal restringido","code":"portal_disabled"}';exit;}
       if($text===''){echo '{"ok":false,"error":"Credenciales inválidas"}';exit;}
+      $_SESSION['user']=$username; $_SESSION['client_name']=$username; $_SESSION['folder_url']=$text; $_SESSION['is_admin']=false;
+      $usersBase=env('GAS_USERS_Q_URL');
+      if($usersBase){
+        $uurl=$usersBase.'?action=users&user='.urlencode($username);
+        $ur=http_get_raw($uurl,false); if($ur['raw']===false||$ur['raw']===null){ $ur=http_get_raw($uurl,true); }
+        $ud=$ur['raw']?json_decode($ur['raw'],true):null;
+        if(is_array($ud) && !empty($ud['ok'])){
+          $users=is_array($ud['users']??null)?$ud['users']:[]; $uu=is_array($users[$username]??null)?$users[$username]:null;
+          if(!$uu && is_array($users)){ foreach($users as $k=>$v){ if(strcasecmp((string)$k,(string)$username)===0){ $uu=is_array($v)?$v:null; break; } } }
+          if($uu){ $alias=trim((string)($uu['alias']??'')); $drv=trim((string)($uu['drive_url']??'')); if($alias!==''){ $_SESSION['client_name']=$alias; } if($drv!==''){ $_SESSION['folder_url']=$drv; } }
+        }
+      }
       echo json_encode(['ok'=>true,'admin'=>false,'is_q'=>false,'folder_url'=>$text]);
       exit;
     }

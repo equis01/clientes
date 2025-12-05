@@ -3,7 +3,7 @@ require_once __DIR__.'/../config/config.php';
 require_once __DIR__.'/env.php';
 function gas_url($service){
   $s=strtolower($service??'');
-  $urlBd=env('GAS_EXEC_URL_BD');
+  $urlBd=env('GAS_EXEC_URL_BD_QRO');
   $urlRep=env('GAS_EXEC_URL_REPORTES');
   $urlUsersQ=env('GAS_USERS_Q_URL');
   $urlUsersOther=env('GAS_USERS_OTHER_URL');
@@ -146,9 +146,7 @@ function gas_find_report($alias,$mes,$anio,$driveUrl,$insecure=false){
 }
 
 function gas_users($username=null,$insecure=false){
-  $isQ=$username? (preg_match('/^q/i',(string)$username)===1) : true;
-  $service=$isQ?'usuarios_q':'usuarios_other';
-  $params=['service'=>$service,'action'=>'users'];
+  $params=['service'=>'usuarios_q','action'=>'users'];
   if($username){ $params['user']=$username; }
   $r=gas_exec($params,$insecure);
   $users=[]; $one=null;

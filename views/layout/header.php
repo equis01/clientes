@@ -1,4 +1,4 @@
-<?php $path=parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); $isPortal=($path==='/portal'||$path==='/carpetas'); $isAdmin=!empty($_SESSION['is_admin']); if(!isset($client)){ $client=isset($_SESSION['client_name'])?$_SESSION['client_name']:(isset($_SESSION['user'])?$_SESSION['user']:''); } ?>
+<?php $path=parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); $isPortal=($path==='/portal'||$path==='/carpetas'); $isAdmin=!empty($_SESSION['is_admin']); if(!isset($client)){ $client=isset($_SESSION['client_name'])?$_SESSION['client_name']:(isset($_SESSION['user'])?$_SESSION['user']:''); } $u=strtolower($_SESSION['user']??''); $isQUser=(preg_match('/^q/',$u)===1); ?>
 <header>
   <div class="topbar">
     <img class="logo logo-light" src="https://mediosconvalor.github.io/mcv/img/logo/logo.png" width="140" height="72" alt="">
@@ -13,8 +13,8 @@
       <div class="nav-user"><?php echo htmlspecialchars($client); ?></div>
       <?php if(!$isAdmin){ ?>
         <a href="/portal" class="<?php echo $isPortal?'active':''; ?>">Portal</a>
-        <a href="/finanzas" class="<?php echo $path==='/finanzas'?'active':''; ?>">Finanzas</a>
-        <a href="/servicios" class="<?php echo $path==='/servicios'?'active':''; ?>">Servicios</a>
+        <?php if($isQUser){ ?><a href="/finanzas" class="<?php echo $path==='/finanzas'?'active':''; ?>">Finanzas</a><?php } ?>
+        <?php if($isQUser){ ?><a href="/servicios" class="<?php echo $path==='/servicios'?'active':''; ?>">Servicios</a><?php } ?>
         <a href="/configuracion" class="<?php echo ($path==='/configuracion'||$path==='/reportes')?'active':''; ?>">Configuración</a>
       <?php } else { ?>
         <?php if(!empty($_SESSION['is_super_admin'])){ ?>

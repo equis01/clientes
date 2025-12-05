@@ -5,6 +5,15 @@ require_once __DIR__.'/../../config/config.php';
 require_once __DIR__.'/../../lib/env.php';
 require_once __DIR__.'/../../lib/db.php';
 $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']);
+require_once __DIR__.'/../../lib/gas.php';
+$rec=gas_users(isset($_SESSION['user'])?$_SESSION['user']:null);
+if($rec['ok'] && is_array($rec['user'])){
+  $alias=isset($rec['user']['alias'])?$rec['user']['alias']:'';
+  if(is_string($alias) && trim($alias)!==''){
+    $_SESSION['client_name']=trim($alias);
+    $client=trim($alias);
+  }
+}
 $username=$_SESSION['user'];
 $msg=null;$err=null;
 if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD']==='POST'){
@@ -56,7 +65,7 @@ if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD']==='POST'){
   <main class="container">
     <div class="card">
       <h2 class="title">Configuración</h2>
-      <div class="subtitle">Usuario: <?php echo htmlspecialchars($client); ?></div>
+      <div class="subtitle">Usuario: <?php echo htmlspecialchars($_SESSION['user']); ?></div>
       <?php if($msg){ ?><div class="alert-success"><?php echo htmlspecialchars($msg); ?></div><?php } ?>
       <?php if($err){ ?><div class="alert-error"><?php echo htmlspecialchars($err); ?></div><?php } ?>
       <form method="post" class="form-grid">
