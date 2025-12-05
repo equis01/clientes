@@ -48,6 +48,16 @@ main{flex:1 0 auto}
 .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
 .alert-success{margin-top:8px;color:#16a34a;font-weight:600}
 .alert-error{margin-top:8px;color:#ef4444;font-weight:600}
+/* modal base */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
+.modal-content{background:var(--header);color:var(--text);border-radius:12px;max-width:520px;width:90%;padding:16px;border:1px solid var(--border)}
+.modal-content{position:relative}
+.modal-close{position:absolute;top:8px;right:8px;background:transparent;border:0;color:var(--text);font-size:18px;line-height:1;cursor:pointer}
+.modal-title{font-weight:700;margin-bottom:8px}
+.modal-body{margin-bottom:12px;line-height:1.4}
+.theme-dark #driveLink{color:#fff}
+#driveLink{color:#00DC2A;font-weight:600}
+.title.diagnose{color:#dc2626}
 @media (max-width:768px){
   header{flex-direction:column;align-items:flex-start;gap:8px}
   header .client{margin-left:0}

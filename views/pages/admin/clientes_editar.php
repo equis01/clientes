@@ -1,7 +1,7 @@
 <?php
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
 if(!isset($_SESSION['user'])){header('Location: /login');exit;}
-if(empty($_SESSION['is_admin'])){http_response_code(403); echo '403'; exit;}
+if(empty($_SESSION['is_admin'])){ http_response_code(403); header('Location: /errores?code=403&msg=Acceso restringido'); exit; }
 require_once __DIR__.'/../../../lib/env.php';
 $u=isset($_GET['u'])?trim($_GET['u']):'';
 $msg=null;$err=null;$dataUser=null;

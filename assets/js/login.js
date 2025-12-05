@@ -2,6 +2,13 @@ document.addEventListener('DOMContentLoaded',function(){
   var current=null;
   var submitBtn=document.getElementById('submit');
   var forgotLink=document.getElementById('forgot-password');
+  function showModal(text){
+    var m=document.getElementById('loginModal');
+    var b=document.getElementById('loginModalBody');
+    var c=document.getElementById('loginModalClose');
+    if(m&&b){ b.textContent=String(text||''); m.style.display='flex'; if(c){ c.onclick=function(){ m.style.display='none'; }; } }
+    else { alert(String(text||'')); }
+  }
   submitBtn.addEventListener('click',function(e){
     e.preventDefault();
     submitBtn.value='INGRESANDO…';
@@ -25,14 +32,14 @@ document.addEventListener('DOMContentLoaded',function(){
           if(m){ m.style.display='flex'; if(c){ c.onclick=function(){ m.style.display='none'; }; }
           } else { alert('Tu acceso al portal está restringido.'); }
         } else {
-          alert((data&&data.error)||'Nombre de usuario o contraseña incorrectos');
+          showModal((data&&data.error)||'Nombre de usuario o contraseña incorrectos');
         }
         submitBtn.value='INGRESAR';
         submitBtn.disabled=false;
       }
     })
     .catch(function(){
-      alert('Error de conexión');
+      showModal('Error de conexión');
       submitBtn.value='INGRESAR';
       submitBtn.disabled=false;
     });
@@ -44,49 +51,15 @@ document.addEventListener('DOMContentLoaded',function(){
   if(teamBtn){
     teamBtn.addEventListener('click',function(e){
       e.preventDefault();
-      try{
-        if(!window.firebase || !window.firebase.initializeApp){ alert('Servicio no disponible'); return; }
-        if(!window._fbInit){ firebase.initializeApp(window.firebaseConfig||{}); window._fbInit=true; }
-        var auth=firebase.auth(); auth.useDeviceLanguage();
-        var provider=new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).then(function(result){
-          return result.user.getIdToken();
-        }).then(function(idToken){
-          var body=new URLSearchParams({firebase_id_token:idToken});
-          return fetch('/auth',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body});
-        }).then(function(r){ return r.json(); }).then(function(data){
-          if(data&&data.ok&&data.admin){ window.location.href='/admin'; }
-          else{ alert((data&&data.error)||'No fue posible iniciar'); }
-        }).catch(function(err){
-          var code=(err&&err.code)||'';
-          if(code==='auth/popup-blocked' || code==='auth/operation-not-supported-in-this-environment'){
-            auth.signInWithRedirect(provider);
-          } else {
-            alert('Error de conexión');
-          }
-        });
-      }catch(_){ alert('No fue posible iniciar'); }
+      window.location.href='/admin/login';
     });
   }
 
   // Manejar resultado de redirect (para navegadores con bloqueo de popup/cookies)
-  if(window.firebase && window.firebase.initializeApp){
-    if(!window._fbInit){ try{ firebase.initializeApp(window.firebaseConfig||{}); window._fbInit=true; }catch(_){} }
-    var auth=firebase.auth();
-    auth.getRedirectResult().then(function(res){
-      if(res && res.user){
-        return res.user.getIdToken().then(function(idToken){
-          var body=new URLSearchParams({firebase_id_token:idToken});
-          return fetch('/auth',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body});
-        }).then(function(r){ return r.json(); }).then(function(data){
-          if(data&&data.ok&&data.admin){ window.location.href='/admin'; }
-        });
-      }
-    }).catch(function(){ /* ignora */ });
-  }
+  
   forgotLink.addEventListener('click',function(e){
     e.preventDefault();
-    alert('Favor de comunicarse con sistemas@mediosconvalor.com para realizar el cambio');
+    showModal('Favor de comunicarse con sistemas@mediosconvalor.com para realizar el cambio');
   });
   document.querySelector('#username').addEventListener('focus',function(){
     if(current)current.pause();
@@ -101,14 +74,3 @@ document.addEventListener('DOMContentLoaded',function(){
     current=anime({targets:'path',strokeDashoffset:{value:-730,duration:700,easing:'easeOutQuart'},strokeDasharray:{value:'530 1386',duration:700,easing:'easeOutQuart'}});
   });
 });
-  // Google Sign-In (opcional)
-  window.mcvGoogleSignIn=function(idToken){
-    var body=new URLSearchParams({google_id_token:idToken});
-    fetch('/auth',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
-    .then(function(r){return r.json();})
-    .then(function(data){
-      if(data&&data.ok){ if(data.admin){ window.location.href='/admin'; } else { window.location.href='/portal'; } }
-      else{ alert((data&&data.error)||'No fue posible iniciar con Google'); }
-    })
-    .catch(function(){ alert('Error de conexión'); });
-  };

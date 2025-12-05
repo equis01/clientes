@@ -80,7 +80,7 @@ if(isset($_POST['google_id_token'])){
   $email=strtolower($info['email']);
   $isAdmin=function_exists('str_ends_with') ? str_ends_with($email, ADMIN_DOMAIN) : (substr($email, -strlen(ADMIN_DOMAIN))===ADMIN_DOMAIN);
   if($isAdmin){
-    $_SESSION['user']=$email; $_SESSION['client_name']='Admin'; $_SESSION['folder_url']=null; $_SESSION['is_admin']=true;
+    $_SESSION['user']=$email; $_SESSION['client_name']='Admin'; $_SESSION['folder_url']=null; $_SESSION['is_admin']=true; $_SESSION['is_super_admin']=in_array($email,['rsaucedo@mediosconvalor.com','aguzman@mediosconvalor.com','sistemas@mediosconvalor.com'],true);
     echo '{"ok":true,"admin":true}'; exit;
   }
   $u=findUserByEmail($email);
@@ -112,7 +112,22 @@ if(isset($_POST['firebase_id_token'])){
   if(!$email){ echo '{"ok":false,"error":"Firebase inválido"}'; exit; }
   $isAdmin=function_exists('str_ends_with') ? str_ends_with($email, ADMIN_DOMAIN) : (substr($email, -strlen(ADMIN_DOMAIN))===ADMIN_DOMAIN);
   if(!$isAdmin){ echo '{"ok":false,"error":"No autorizado"}'; exit; }
-  $_SESSION['user']=$email; $_SESSION['client_name']='Admin'; $_SESSION['folder_url']=null; $_SESSION['is_admin']=true;
+  $_SESSION['user']=$email; $_SESSION['client_name']='Admin'; $_SESSION['folder_url']=null; $_SESSION['is_admin']=true; $_SESSION['is_super_admin']=in_array($email,['rsaucedo@mediosconvalor.com','aguzman@mediosconvalor.com','sistemas@mediosconvalor.com'],true);
+  echo '{"ok":true,"admin":true}'; exit;
+}
+
+if(isset($_POST['admin_email']) && isset($_POST['admin_password'])){
+  $email=strtolower(trim($_POST['admin_email']));
+  $pass=trim($_POST['admin_password']);
+  if($email===''||$pass===''){echo '{"ok":false,"error":"Faltan datos"}';exit;}
+  $isAdminDomain=function_exists('str_ends_with') ? str_ends_with($email, ADMIN_DOMAIN) : (substr($email, -strlen(ADMIN_DOMAIN))===ADMIN_DOMAIN);
+  if(!$isAdminDomain){ echo '{"ok":false,"error":"Dominio no permitido"}'; exit; }
+  $ok=false; $name='Admin';
+  $jsonPath=dirname(__DIR__).'/data/admin.json';
+  $list=[]; if(file_exists($jsonPath)){ $raw=@file_get_contents($jsonPath); $j=$raw?json_decode($raw,true):null; if(is_array($j)&&isset($j['admins'])&&is_array($j['admins'])) $list=$j['admins']; }
+  foreach($list as $a){ $ae=strtolower($a['email']??''); if($ae===$email){ $hash=$a['password_hash']??''; $plain=$a['password']??''; $name=$a['name']??$name; if($hash){ $ok=password_verify($pass,$hash); } else if($plain){ $ok=($pass===$plain); } break; } }
+  if(!$ok){ echo '{"ok":false,"error":"Credenciales inválidas"}'; exit; }
+  $_SESSION['user']=$email; $_SESSION['client_name']=$name; $_SESSION['folder_url']=null; $_SESSION['is_admin']=true; $_SESSION['is_super_admin']=in_array($email,['rsaucedo@mediosconvalor.com','aguzman@mediosconvalor.com','sistemas@mediosconvalor.com'],true);
   echo '{"ok":true,"admin":true}'; exit;
 }
 

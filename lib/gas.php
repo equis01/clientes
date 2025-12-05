@@ -2,7 +2,15 @@
 require_once __DIR__.'/../config/config.php';
 require_once __DIR__.'/env.php';
 function gas_url($service){
-  return env('GAS_EXEC_URL_BD');
+  $s=strtolower($service??'');
+  $urlBd=env('GAS_EXEC_URL_BD');
+  $urlRep=env('GAS_EXEC_URL_REPORTES');
+  $urlUsersQ=env('GAS_USERS_Q_URL');
+  $urlUsersOther=env('GAS_USERS_OTHER_URL');
+  if($s==='reportes'){ return $urlRep?:$urlBd; }
+  if($s==='usuarios_q'){ return $urlUsersQ?:($urlUsersOther?:($urlBd?:$urlRep)); }
+  if($s==='usuarios_other'){ return $urlUsersOther?:($urlUsersQ?:($urlBd?:$urlRep)); }
+  return $urlBd?:$urlRep;
 }
 function gas_exec($params,$insecure=false){
   $service=strtolower($params['service'] ?? 'servicios');
@@ -86,4 +94,68 @@ function gas_finanzas($alias,$insecure=false){
     }
   }
   return ['ok'=>$r['ok'],'data'=>$res,'error'=>$r['error'],'status'=>$r['status'],'raw'=>$r['raw'],'method'=>$r['method'],'url'=>$r['url'],'public_url'=>$r['public_url']];
+}
+
+function gas_generate_report($alias,$mes,$anio,$driveUrl,$insecure=false,$usuario=null){
+  $mm=preg_replace('/\D/','', (string)$mes);
+  if($mm===''){ $mm=''; } else { $mm=str_pad((string)intval($mm),2,'0',STR_PAD_LEFT); }
+  $yy=preg_replace('/\D/','', (string)$anio);
+  $params=['service'=>'reportes','action'=>'generateReport','alias'=>$alias];
+  if($mm!==''){ $params['mes']=$mm; }
+  if($yy!==''){ $params['anio']=$yy; }
+  if($driveUrl){ $params['drive_url']=$driveUrl; }
+  if($usuario){ $params['usuario']=$usuario; }
+  $r=gas_exec($params,$insecure);
+  $fileId=null; $fileName=null; $downloadUrl=null; $folderPath=null;
+  if($r['ok'] && is_array($r['data'])){
+    $d=$r['data'];
+    $fileId=$d['fileId']??($d['id']??null);
+    $fileName=$d['fileName']??($d['name']??null);
+    $downloadUrl=$d['downloadUrl']??($fileId?('https://drive.google.com/uc?export=download&id='.$fileId):null);
+    $folderPath=$d['folderPath']??null;
+  }
+  return ['ok'=>$r['ok'],'fileId'=>$fileId,'fileName'=>$fileName,'downloadUrl'=>$downloadUrl,'folderPath'=>$folderPath,'error'=>$r['error'],'status'=>$r['status'],'method'=>$r['method'],'public_url'=>$r['public_url']];
+}
+
+function gas_lock_report($fileId,$insecure=false){
+  $fid=trim((string)$fileId);
+  if($fid===''){ return ['ok'=>false,'error'=>'fileId requerido']; }
+  $params=['service'=>'reportes','action'=>'lockReport','fileId'=>$fid];
+  $r=gas_exec($params,$insecure);
+  return ['ok'=>$r['ok'],'error'=>$r['error'],'status'=>$r['status'],'method'=>$r['method'],'public_url'=>$r['public_url']];
+}
+
+function gas_find_report($alias,$mes,$anio,$driveUrl,$insecure=false){
+  $mm=preg_replace('/\D/','', (string)$mes);
+  if($mm===''){ $mm=''; } else { $mm=str_pad((string)intval($mm),2,'0',STR_PAD_LEFT); }
+  $yy=preg_replace('/\D/','', (string)$anio);
+  $params=['service'=>'reportes','action'=>'findReport','alias'=>$alias];
+  if($mm!==''){ $params['mes']=$mm; }
+  if($yy!==''){ $params['anio']=$yy; }
+  if($driveUrl){ $params['drive_url']=$driveUrl; }
+  $r=gas_exec($params,$insecure);
+  $fileId=null; $fileName=null; $downloadUrl=null; $folderPath=null;
+  if($r['ok'] && is_array($r['data'])){
+    $d=$r['data'];
+    $fileId=$d['fileId']??($d['id']??null);
+    $fileName=$d['fileName']??($d['name']??null);
+    $downloadUrl=$d['downloadUrl']??($fileId?('https://drive.google.com/uc?export=download&id='.$fileId):null);
+    $folderPath=$d['folderPath']??null;
+  }
+  return ['ok'=>$r['ok'],'fileId'=>$fileId,'fileName'=>$fileName,'downloadUrl'=>$downloadUrl,'folderPath'=>$folderPath,'error'=>$r['error'],'status'=>$r['status'],'method'=>$r['method'],'public_url'=>$r['public_url']];
+}
+
+function gas_users($username=null,$insecure=false){
+  $isQ=$username? (preg_match('/^q/i',(string)$username)===1) : true;
+  $service=$isQ?'usuarios_q':'usuarios_other';
+  $params=['service'=>$service,'action'=>'users'];
+  if($username){ $params['user']=$username; }
+  $r=gas_exec($params,$insecure);
+  $users=[]; $one=null;
+  if($r['ok'] && is_array($r['data'])){
+    $d=$r['data'];
+    if(isset($d['users']) && is_array($d['users'])){ $users=$d['users']; }
+    if($username && isset($users[$username]) && is_array($users[$username])){ $one=$users[$username]; }
+  }
+  return ['ok'=>$r['ok'],'users'=>$users,'user'=>$one,'error'=>$r['error'],'status'=>$r['status'],'method'=>$r['method'],'public_url'=>$r['public_url']];
 }

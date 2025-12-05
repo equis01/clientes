@@ -1,7 +1,7 @@
 <?php
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
 if(!isset($_SESSION['user'])){header('Location: /login');exit;}
-if(empty($_SESSION['is_admin'])){http_response_code(403); echo '403'; exit;}
+if(empty($_SESSION['is_admin'])){ http_response_code(403); header('Location: /errores?code=403&msg=Acceso restringido'); exit; }
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -20,4 +20,3 @@ if(empty($_SESSION['is_admin'])){http_response_code(403); echo '403'; exit;}
   <?php include dirname(__DIR__).'/../layout/footer.php'; ?>
 </body>
 </html>
-

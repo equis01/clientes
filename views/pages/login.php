@@ -33,13 +33,20 @@
             <a href="#" id="forgot-password">¿Olvidó su usuario, o contraseña?</a>
           </p>
           <p class="forgot-password">
-            <a href="#" id="team-login">¿Perteneces al team de Medios con Valor?</a>
+            <a href="/admin/login" id="team-login">¿Perteneces al team de Medios con Valor?</a>
           </p>
           <div id="portalModal" class="modal" style="display:none">
             <div class="modal-content">
               <div class="modal-title">Acceso restringido</div>
               <div class="modal-body">Tu acceso al portal está restringido. Puede ser un error del sistema, o se bloqueó tu acceso por falta de pago, o finalización de servicio. Favor de comunicarte con tu contacto de Medios Con Valor, para revisar este tema.</div>
               <div class="actions"><button type="button" class="btn" id="portalClose">Aceptar</button></div>
+            </div>
+          </div>
+          <div id="loginModal" class="modal" style="display:none">
+            <div class="modal-content">
+              <div class="modal-title">Aviso</div>
+              <div class="modal-body" id="loginModalBody"></div>
+              <div class="actions"><button type="button" class="btn" id="loginModalClose">Aceptar</button></div>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 <?php
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
 if(!isset($_SESSION['user'])){header('Location: /login');exit;}
-if(empty($_SESSION['is_admin'])){http_response_code(403); echo '403'; exit;}
+if(empty($_SESSION['is_admin'])){ http_response_code(403); header('Location: /errores?code=403&msg=Acceso restringido'); exit; }
 require_once __DIR__.'/../../../config/config.php';
 require_once __DIR__.'/../../../lib/env.php';
 $msg=null;$err=null;
@@ -61,7 +61,7 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <?php $pageTitle='Clientes'; include dirname(__DIR__).'/../layout/head.php'; ?>
+  <?php $pageTitle='Portal'; include dirname(__DIR__).'/../layout/head.php'; ?>
 </head>
 <body>
   <?php include dirname(__DIR__).'/../layout/header.php'; ?>
@@ -81,7 +81,7 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
               <th style="text-align:left">Alias</th>
               <th style="text-align:left">Correo</th>
               <th style="text-align:left">URL</th>
-              <th style="text-align:left">Valida</th>
+              <th style="text-align:left">Portal</th>
               <th style="text-align:left">Editar</th>
             </tr>
           </thead>
@@ -94,7 +94,7 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
                 <td><?php echo htmlspecialchars($u['alias']??''); ?></td>
                 <td><?php echo htmlspecialchars($u['email']??''); ?></td>
                 <td><a target="_blank" href="<?php echo htmlspecialchars($u['drive_url']??'#'); ?>">abrir</a></td>
-                <td><?php echo intval($u['valid']??0)===1?'✔':'✘'; ?></td>
+                <td><?php echo intval($u['portal_enabled']??1)===1?'✔':'✘'; ?></td>
                 <td><button class="btn secondary" type="button" data-edit="<?php echo htmlspecialchars($u['username']??''); ?>">Editar</button></td>
               </tr>
             <?php } } ?>

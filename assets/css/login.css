@@ -38,6 +38,6 @@ input::-moz-focus-inner{border:0}
   .login{margin:0}
   .right{padding:0;min-height:380px}
   .form{margin:40px;position:absolute}
-  svg{display:block;position:absolute;width:320px;top:8px}
+  svg{display:block;position:absolute;width:320px;top:0}
 }
 #submit:hover{background-color:#fff}
