@@ -1,0 +1,18 @@
+<svg
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Diagonal 1: verde Medios con Valor -->
+  <line x1="4" y1="4" x2="20" y2="20"
+        stroke="#00A651"
+        stroke-width="2"
+        stroke-linecap="round" />
+  
+  <!-- Diagonal 2: azul #009eff -->
+  <line x1="20" y1="4" x2="4" y2="20"
+        stroke="#009EFF"
+        stroke-width="2"
+        stroke-linecap="round" />
+</svg>

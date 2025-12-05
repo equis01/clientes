@@ -3,8 +3,14 @@
   <div class="topbar">
     <img class="logo logo-light" src="https://mediosconvalor.github.io/mcv/img/logo/logo.png" width="140" height="72" alt="">
     <img class="logo logo-dark" src="/assets/img/logo_blanco.png" width="140" height="72" alt="">
-    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú"><span></span><span></span><span></span></button>
+    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú" aria-expanded="false">
+      <img class="icon-hamburger-light" src="/assets/icons/menu-hamburger.svg" alt="" aria-hidden="true">
+      <img class="icon-hamburger-dark" src="/assets/icons/menu-hamburger-white.svg" alt="" aria-hidden="true">
+      <img class="icon-close" src="/assets/icons/x.svg" alt="" aria-hidden="true">
+    </button>
     <nav>
+      <button class="nav-close" id="navClose" aria-label="Cerrar menú"><img src="/assets/icons/x.svg" alt="" aria-hidden="true"></button>
+      <div class="nav-user"><?php echo htmlspecialchars($client); ?></div>
       <?php if(!$isAdmin){ ?>
         <a href="/portal" class="<?php echo $isPortal?'active':''; ?>">Portal</a>
         <a href="/finanzas" class="<?php echo $path==='/finanzas'?'active':''; ?>">Finanzas</a>

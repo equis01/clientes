@@ -1,0 +1,24 @@
+<svg
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Línea 1: blanca -->
+  <line x1="3" y1="6" x2="21" y2="6"
+        stroke="#FFFFFF"
+        stroke-width="2"
+        stroke-linecap="round" />
+  
+  <!-- Línea 2: verde Medios con Valor (ajusta el hex si usas otro) -->
+  <line x1="3" y1="12" x2="21" y2="12"
+        stroke="#00A651"
+        stroke-width="2"
+        stroke-linecap="round" />
+  
+  <!-- Línea 3: azul #009eff -->
+  <line x1="3" y1="18" x2="21" y2="18"
+        stroke="#009EFF"
+        stroke-width="2"
+        stroke-linecap="round" />
+</svg>

@@ -7,6 +7,7 @@ body{min-height:100vh;display:flex;flex-direction:column}
 a{color:var(--accent2);text-decoration:none}
 html,body,header,.card,.menu-toggle,.theme-toggle,header nav a{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease}
 header{display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--header);border-bottom:1px solid var(--border);position:sticky;top:0}
+header{z-index:100}
 header .topbar{display:flex;align-items:center;gap:16px;width:100%}
 header img{display:block}
 header .logo-dark{display:none}
@@ -55,23 +56,32 @@ main{flex:1 0 auto}
 .modal-close{position:absolute;top:8px;right:8px;background:transparent;border:0;color:var(--text);font-size:18px;line-height:1;cursor:pointer}
 .modal-title{font-weight:700;margin-bottom:8px}
 .modal-body{margin-bottom:12px;line-height:1.4}
-.theme-dark #driveLink{color:#fff}
+.theme-dark #driveLink{color:#009EFF}
 #driveLink{color:#00DC2A;font-weight:600}
 .title.diagnose{color:#dc2626}
 @media (max-width:768px){
   header{flex-direction:column;align-items:flex-start;gap:8px}
-  header .client{margin-left:0}
-  .menu-toggle{display:inline-flex}
+  header .client{display:none}
+  .menu-toggle{display:inline-flex;order:1;margin-left:auto}
+  header .topbar .menu-toggle{display:flex !important}
   header .topbar{flex-wrap:wrap}
-  header .topbar nav{order:2;flex-basis:100%;justify-content:center;margin-top:8px}
-  header .topbar .client{order:1;margin-left:auto}
-  nav{display:flex;flex-wrap:wrap;gap:12px;width:100%;justify-content:center;opacity:1;transform:none;pointer-events:auto;max-height:none}
-  nav.open{display:flex}
+  header .topbar nav{order:2;margin-top:0}
+  header .topbar .client{order:3;margin-left:auto}
+  /* Panel lateral con animación */
+  header nav{position:fixed;top:0;right:0;bottom:0;width:80vw;max-width:360px;background:var(--header);border-left:1px solid var(--border);box-shadow:-8px 0 16px rgba(0,0,0,.12);padding:14px 12px;display:flex;flex-direction:column;gap:12px;opacity:0;transform:translateX(100%);pointer-events:none;z-index:50;transition:transform .28s ease, opacity .28s ease}
+  header nav.open{opacity:1;transform:translateX(0);pointer-events:auto}
+  .nav-close{display:block;position:absolute;top:10px;right:10px;background:transparent;border:0;width:28px;height:28px}
+  .nav-close img{width:24px;height:24px}
+  .nav-close{position:absolute;top:10px;right:10px;background:transparent;border:0;width:28px;height:28px;display:block}
+  .nav-close img{width:24px;height:24px}
   nav a{margin-right:0}
   .container{max-width:100%;padding:0 12px}
   .card{padding:12px;max-width:100%}
   .title{font-size:18px}
   .card table{min-width:640px}
+  /* Overlay en móvil */
+  .nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:49}
+  .nav-overlay.open{display:block}
 }
 @media (min-width:769px){
   .card{width:720px}
@@ -82,7 +92,21 @@ main{flex:1 0 auto}
   .card{padding:10px}
 }
 .menu-toggle{display:none;flex-direction:column;justify-content:center;align-items:center;width:36px;height:28px;border:0;border-radius:8px;background:transparent;cursor:pointer;padding:4px}
-.menu-toggle span{display:block;width:24px;height:4px;background:var(--text);margin:3px 0;border-radius:3px}
+.menu-toggle img{width:22px;height:22px}
+.menu-toggle{transition:transform .25s ease}
+.menu-toggle[aria-expanded="true"]{transform:rotate(90deg)}
+.menu-toggle .icon-close{display:none}
+.menu-toggle .icon-hamburger-dark{display:none}
+html:not(.theme-dark) .menu-toggle .icon-hamburger-light{display:inline}
+html:not(.theme-dark) .menu-toggle .icon-hamburger-dark{display:none}
+html.theme-dark .menu-toggle .icon-hamburger-light{display:none}
+html.theme-dark .menu-toggle .icon-hamburger-dark{display:inline}
+.menu-toggle[aria-expanded="true"] .icon-close{display:inline}
+.menu-toggle[aria-expanded="true"] .icon-hamburger-light{display:none}
+.menu-toggle[aria-expanded="true"] .icon-hamburger-dark{display:none}
+/* Alias dentro del menú (solo móvil) */
+.nav-user{display:none}
+@media (max-width:768px){ .nav-user{display:block;padding:8px 10px;font-weight:600;border-bottom:1px solid var(--border);text-align:center} }
 @media (hover:hover){.menu-toggle:hover span{opacity:.85}}
 .theme-toggle{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);cursor:pointer}
 footer{border-top:1px solid var(--border);background:var(--header);opacity:.92;font-size:12px}
@@ -94,3 +118,5 @@ html:not(.theme-dark) .icon-moon{display:none}
 html.theme-dark .icon-sun{display:none}
 html.theme-dark .icon-moon{display:block}
 .theme-toggle svg{width:22px;height:22px;stroke:var(--text)}
+/* Ocultar botón de cerrar en escritorio */
+@media (min-width:769px){ .nav-close{display:none} }
