@@ -2,7 +2,7 @@
 ?>
 <footer>
   <div class="container">
-    <div>© Medios Con Valor | Developed by: <a href="https://evazquez.me" target="_blank">Eduardo Vázquez</a></div>
+    <div>© Medios Con Valor | Developed by: <a id="driveLink" href="https://evazquez.me" target="_blank">Eduardo Vázquez</a></div>
     <div>
       <button id="footerThemeToggle" class="theme-toggle" aria-label="Cambiar tema" title="Cambiar tema">
         <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">

@@ -96,6 +96,17 @@ function gas_finanzas($alias,$insecure=false){
   return ['ok'=>$r['ok'],'data'=>$res,'error'=>$r['error'],'status'=>$r['status'],'raw'=>$r['raw'],'method'=>$r['method'],'url'=>$r['url'],'public_url'=>$r['public_url']];
 }
 
+function gas_finanzas_list($alias,$insecure=false){
+  $params=['service'=>'bd','action'=>'finanzas','alias'=>$alias];
+  $r=gas_exec($params,$insecure);
+  $list=[];
+  if($r['ok'] && is_array($r['data'])){
+    $d=$r['data'];
+    if(isset($d['resultados']) && is_array($d['resultados'])){ $list=$d['resultados']; }
+  }
+  return ['ok'=>$r['ok'],'resultados'=>$list,'error'=>$r['error'],'status'=>$r['status'],'raw'=>$r['raw'],'method'=>$r['method'],'url'=>$r['url'],'public_url'=>$r['public_url']];
+}
+
 function gas_generate_report($alias,$mes,$anio,$driveUrl,$insecure=false,$usuario=null){
   $mm=preg_replace('/\D/','', (string)$mes);
   if($mm===''){ $mm=''; } else { $mm=str_pad((string)intval($mm),2,'0',STR_PAD_LEFT); }

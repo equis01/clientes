@@ -7,7 +7,15 @@ require_once __DIR__.'/../../lib/env.php';
 require_once __DIR__.'/../../lib/gas.php';
 require_once __DIR__.'/../../lib/format.php';
 $client=isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user'];
-$fin=gas_finanzas($client);
+$brand=isset($_SESSION['brand_name'])?$_SESSION['brand_name']:null;
+if(!$brand && $client){ $fin0=gas_finanzas($client); if($fin0['ok'] && is_array($fin0['data'])){ $_SESSION['brand_name']=isset($fin0['data']['razonSocial'])?$fin0['data']['razonSocial']:($_SESSION['brand_name']??null); $brand=$_SESSION['brand_name']; } }
+$list=gas_finanzas_list($brand?:$client);
+$aliases=[]; if($list['ok'] && is_array($list['resultados'])){ foreach($list['resultados'] as $row){ $al=trim((string)($row['alias']??'')); if($al!==''){ $aliases[$al]=true; } } }
+$aliasSel=isset($_GET['alias_sel'])?trim($_GET['alias_sel']):'';
+$aliasList=array_keys($aliases);
+if(count($aliasList)>0){ if($aliasSel===''){ $aliasSel=$aliasList[0]; } elseif(!in_array($aliasSel,$aliasList,true)){ $aliasSel=$aliasList[0]; } }
+$queryAlias=$aliasSel!==''? $aliasSel : ($brand?:$client);
+$fin=gas_finanzas($queryAlias);
 $error=$fin['error'];
 $status=$fin['status'];
 $method=$fin['method'];
@@ -32,6 +40,19 @@ $serviciosFmt=(is_string($servicios)&&is_numeric(str_replace(',','.', $servicios
   <main class="container">
     <div class="card">
       <h2 class="title">Finanzas</h2>
+      <?php if(count($aliases)>1){ ?>
+      <form method="get" action="/finanzas" class="filter" style="margin-bottom:12px">
+        <div class="field">
+          <label for="alias_sel">Alias</label>
+          <select id="alias_sel" name="alias_sel">
+            <?php foreach($aliasList as $al){ $sel=($aliasSel!=='' && $aliasSel===$al)?' selected':''; ?>
+              <option value="<?php echo htmlspecialchars($al); ?>"<?php echo $sel; ?>><?php echo htmlspecialchars($al); ?></option>
+            <?php } ?>
+          </select>
+        </div>
+        <button type="submit" class="btn">Aplicar</button>
+      </form>
+      <?php } ?>
       <div>Tarifa actual (sin IVA): <?php echo htmlspecialchars($tarifaFmt); ?></div>
       <div>Tarifa exceso m3 (sin IVA): <?php echo htmlspecialchars($tarifaExcesoFmt); ?> <button type="button" class="btn secondary" id="excesoInfoBtn">¿Cómo se calcula?</button></div>
       <div>Volumen contratado (m3): <?php echo htmlspecialchars($volumen); ?></div>
@@ -54,7 +75,7 @@ $serviciosFmt=(is_string($servicios)&&is_numeric(str_replace(',','.', $servicios
       <button type="button" class="modal-close" id="excesoClose" aria-label="Cerrar">×</button>
       <div class="modal-title">Cálculo de exceso</div>
       <div class="modal-body">
-        La tarifa de exceso es el precio por cada m³ que se excede del volumen contratado. Si generas exceso, se cobra proporcionalmente usando regla de 3.
+        La tarifa de exceso es el precio por cada m³ que se excede del volumen contratado. Si generas exceso, se cobra proporcionalmente usando regla de tres.
         <div style="margin-top:12px" id="calc" data-tarifa="<?php echo htmlspecialchars((string)$tarifaExceso); ?>">
           <label style="display:block;margin-bottom:8px">Exceso generado (m³)<input class="input" type="number" step="0.01" min="0" id="excesoM3" style="width:140px"></label>
           <div id="excesoResult" style="margin-top:8px;font-weight:600"></div>
@@ -66,6 +87,8 @@ $serviciosFmt=(is_string($servicios)&&is_numeric(str_replace(',','.', $servicios
   <?php include __DIR__.'/../layout/footer.php'; ?>
   <script>
   (function(){
+    var form=document.querySelector('form.filter');
+    if(form){ form.addEventListener('submit',function(){ try{ window.showLoader('Cargando…'); }catch(_){} }); }
     var btn=document.getElementById('excesoInfoBtn');
     var m=document.getElementById('excesoModal');
     var x=document.getElementById('excesoClose');

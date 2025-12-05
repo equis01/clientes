@@ -9,7 +9,8 @@ require_once __DIR__.'/../../lib/format.php';
 $tzTmp=env('TIMEZONE','America/Mexico_City');
 if(isset($_GET['generate_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
   header('Content-Type: application/json; charset=utf-8');
-  $alias=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']);
+  $aliasSel=isset($_POST['alias_sel'])?trim($_POST['alias_sel']):'';
+  $alias=$aliasSel!==''? $aliasSel : (isset($_SESSION['brand_name']) && $_SESSION['brand_name']?$_SESSION['brand_name']:(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']));
   $mesReq=isset($_POST['mes'])?trim($_POST['mes']):'';
   $anioReq=isset($_POST['anio'])?trim($_POST['anio']):'';
   $drive=isset($_SESSION['folder_url'])?$_SESSION['folder_url']:null;
@@ -38,7 +39,8 @@ if(isset($_GET['lock_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
 }
 if(isset($_GET['find_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
   header('Content-Type: application/json; charset=utf-8');
-  $alias=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']);
+  $aliasSel=isset($_POST['alias_sel'])?trim($_POST['alias_sel']):'';
+  $alias=$aliasSel!==''? $aliasSel : (isset($_SESSION['brand_name']) && $_SESSION['brand_name']?$_SESSION['brand_name']:(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']));
   $mesReq=isset($_POST['mes'])?trim($_POST['mes']):'';
   $anioReq=isset($_POST['anio'])?trim($_POST['anio']):'';
   $drive=isset($_SESSION['folder_url'])?$_SESSION['folder_url']:null;
@@ -49,6 +51,13 @@ if(isset($_GET['find_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
 }
 if(function_exists('date_default_timezone_set')){date_default_timezone_set($tz);} 
 $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']);
+$brand=isset($_SESSION['brand_name'])?$_SESSION['brand_name']:null;
+if(!$brand && $client){ $fin0=gas_finanzas($client); if($fin0['ok'] && is_array($fin0['data'])){ $bn=isset($fin0['data']['razonSocial'])?$fin0['data']['razonSocial']:null; if(!$bn && isset($fin0['raw'])){ } $_SESSION['brand_name']=$bn?:$_SESSION['brand_name']??null; $brand=$_SESSION['brand_name']; } }
+$listRes=gas_finanzas_list($brand?:$client);
+$aliases=[]; if($listRes['ok'] && is_array($listRes['resultados'])){ foreach($listRes['resultados'] as $row){ $al=trim((string)($row['alias']??'')); if($al!==''){ $aliases[$al]=true; } } }
+$aliasSel=isset($_GET['alias_sel'])?trim($_GET['alias_sel']):'';
+$aliasList=array_keys($aliases);
+if(count($aliasList)>0){ if($aliasSel===''){ $aliasSel=$aliasList[0]; } elseif(!in_array($aliasSel,$aliasList,true)){ $aliasSel=$aliasList[0]; } }
 $mes=isset($_GET['mes'])?trim($_GET['mes']):'';
 $anio=isset($_GET['anio'])?trim($_GET['anio']):'';
 $todoAnio=isset($_GET['todo_anio']) && ($_GET['todo_anio']==='1' || strtolower($_GET['todo_anio'])==='true');
@@ -65,7 +74,8 @@ $servicios='-';
 $rows=[];
 $periodo=['activo'=>false,'mes'=>null,'anio'=>null,'mesTexto'=>null];
 $error=null;$status=null;$raw=null;$debug=isset($_GET['debug']);$insecure=isset($_GET['insecure']);$method='';$gasPublic=null;
-$res=gas_metrics($client, $todoAnio? '' : $mes, $anio, $insecure);
+$queryAlias=$aliasSel!==''? $aliasSel : ($brand?:$client);
+$res=gas_metrics($queryAlias, $todoAnio? '' : $mes, $anio, $insecure);
 $servicios=$res['servicios'];
 $rows=$res['rows'];
 $periodo=$res['periodo'];
@@ -107,6 +117,16 @@ $gasReal=$res['url'];
             <option value="<?php echo htmlspecialchars($currentYear); ?>" selected><?php echo htmlspecialchars($currentYear); ?></option>
           </select>
         </div>
+        <?php if(count($aliases)>1){ ?>
+        <div class="field">
+          <label for="alias_sel">Alias</label>
+          <select id="alias_sel" name="alias_sel">
+            <?php foreach($aliasList as $al){ $sel=($aliasSel!=='' && $aliasSel===$al)?' selected':''; ?>
+              <option value="<?php echo htmlspecialchars($al); ?>"<?php echo $sel; ?>><?php echo htmlspecialchars($al); ?></option>
+            <?php } ?>
+          </select>
+        </div>
+        <?php } ?>
         <label class="field" style="margin-left:8px">
           <input type="checkbox" name="todo_anio" value="1"<?php echo $todoAnio?' checked':''; ?>> Todo el año
         </label>
@@ -161,6 +181,8 @@ $gasReal=$res['url'];
   </div>
   <script>
   (function(){
+    var form=document.querySelector('form.filter');
+    if(form){ form.addEventListener('submit',function(){ try{ window.showLoader('Cargando…'); }catch(_){} }); }
     var chk=document.querySelector('input[name="todo_anio"]');
     var sel=document.getElementById('mes');
     if(!chk||!sel) return;
@@ -205,7 +227,8 @@ $gasReal=$res['url'];
       if(downloadRow){ downloadRow.style.display='none'; }
       function startDotsOn(el, base){ var t=el===downloadStatus? 'timer2':'timer1'; if(t==='timer2'){ if(dotsTimer2) clearInterval(dotsTimer2); } else { if(dotsTimer1) clearInterval(dotsTimer1); } dots=1; el.textContent=base+'.'; var h=setInterval(function(){ dots=(dots%3)+1; el.textContent=base+(dots===1?'.':(dots===2?'..':'...')); },600); if(t==='timer2'){ dotsTimer2=h; } else { dotsTimer1=h; } }
       startDotsOn(status,'Generando');
-      var bodyFind='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y);
+      var aSel2=document.getElementById('alias_sel'); var aVal=(aSel2&&aSel2.value)||'';
+      var bodyFind='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal);
       fetch('/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind})
         .then(function(r){ return r.json(); })
         .then(function(f){
@@ -222,7 +245,7 @@ $gasReal=$res['url'];
             if(u){ try{ window.open(u,'_blank'); }catch(_){ } }
             gen.disabled=false; gen.textContent='Generar reporte';
           } else {
-            var bodyGen='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y);
+            var bodyGen='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal);
             status.classList.remove('err');
             startDotsOn(status,'Generando');
             fetch('/servicios?generate_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyGen})
@@ -241,7 +264,7 @@ $gasReal=$res['url'];
                   if(url){ try{ window.open(url,'_blank'); }catch(_){ } }
                   gen.disabled=false; gen.textContent='Generar reporte';
                 } else {
-                  var bodyFind2='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y);
+                  var bodyFind2='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal);
                   startDotsOn(status,'Generando');
                   fetch('/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind2})
                     .then(function(r3){ return r3.json(); })
