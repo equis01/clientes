@@ -64,7 +64,8 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
   <?php $pageTitle='Portal'; include dirname(__DIR__).'/../layout/head.php'; ?>
 </head>
 <body>
-  <?php include dirname(__DIR__).'/../layout/header.php'; ?>
+<?php include dirname(__DIR__).'/../layout/header.php'; ?>
+<?php include dirname(__DIR__).'/../layout/modal_admins.php'; ?>
   <main class="container">
     <div class="card">
       <h2 class="title">Portal</h2>
@@ -81,7 +82,7 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
               <th style="text-align:left">Alias</th>
               <th style="text-align:left">Correo</th>
               <th style="text-align:left">URL</th>
-              <th style="text-align:left">Portal</th>
+              <th style="text-align:left">Acceso a portal <button type="button" class="btn secondary" style="margin-left:4px;padding:0;width:22px;height:22px;line-height:22px;border-radius:50%" onclick="adminInfoOpen('portal')">?</button></th>
               <th style="text-align:left">Editar</th>
             </tr>
           </thead>

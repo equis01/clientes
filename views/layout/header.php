@@ -1,8 +1,10 @@
 <?php $path=parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); $isPortal=($path==='/portal'||$path==='/carpetas'); $isAdmin=!empty($_SESSION['is_admin']); if(!isset($client)){ $client=isset($_SESSION['client_name'])?$_SESSION['client_name']:(isset($_SESSION['user'])?$_SESSION['user']:''); } $brandName=isset($_SESSION['brand_name'])?$_SESSION['brand_name']:null; if(!$brandName && !$isAdmin && $client){ require_once dirname(__DIR__,2).'/lib/gas.php'; $finList=gas_finanzas_list($client); if($finList['ok'] && is_array($finList['resultados']) && count($finList['resultados'])>0){ $bn=trim((string)($finList['resultados'][0]['razonSocial']??'')); if($bn!==''){ $_SESSION['brand_name']=$bn; $brandName=$bn; } } } $displayName=$brandName?:$client; $u=strtolower($_SESSION['user']??''); $isQUser=(preg_match('/^q/',$u)===1); ?>
 <header>
   <div class="topbar">
-    <img class="logo logo-light" src="https://mediosconvalor.github.io/mcv/img/logo/logo.png" width="140" height="72" alt="">
-    <img class="logo logo-dark" src="/assets/img/logo_blanco.png" width="140" height="72" alt="">
+    <a href="/" class="logo-link">
+      <img class="logo logo-light" src="https://mediosconvalor.github.io/mcv/img/logo/logo.png" width="140" height="72" alt="">
+      <img class="logo logo-dark" src="/assets/img/logo_blanco.png" width="140" height="72" alt="">
+    </a>
     <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú" aria-expanded="false">
       <img class="icon-hamburger-light" src="/assets/icons/menu-hamburger.svg" alt="" aria-hidden="true">
       <img class="icon-hamburger-dark" src="/assets/icons/menu-hamburger-white.svg" alt="" aria-hidden="true">

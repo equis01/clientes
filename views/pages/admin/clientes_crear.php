@@ -9,6 +9,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   $password=trim($_POST['password']??'');
   $drive_url=trim($_POST['drive_url']??'');
   $email=trim($_POST['email']??'');
+  if($email!==''){ $parts=array_map('trim', explode(',', $email)); $parts=array_filter($parts,function($s){ return $s!==''; }); $email=implode(',', $parts); }
   $alias=trim($_POST['alias']??'');
   $portal=isset($_POST['portal'])?trim($_POST['portal']):'1';
   $valid='0';
@@ -30,15 +31,16 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
 ?>
 <!DOCTYPE html>
 <html lang="es"><head><?php $pageTitle='Crear usuario'; include dirname(__DIR__).'/../layout/head.php'; ?></head>
-<body>
+<body data-users-api="<?php echo htmlspecialchars(env('GAS_USERS_Q_URL')); ?>">
 <?php include dirname(__DIR__).'/../layout/header.php'; ?>
+<?php include dirname(__DIR__).'/../layout/modal_admins.php'; ?>
 <main class="container">
   <div class="card">
     <h2 class="title">Crear usuario</h2>
     <?php if($msg){ ?><div class="alert-success"><?php echo htmlspecialchars($msg); ?></div><?php } ?>
     <?php if($err){ ?><div class="alert-error"><?php echo htmlspecialchars($err); ?></div><?php } ?>
     <form method="post" class="form-grid">
-      <div class="field"><label>Usuario<input class="input" type="text" name="username" required placeholder="ej: Q1120W43"></label></div>
+      <div class="field"><label>Usuario<button type="button" class="btn secondary" style="margin-left:6px;padding:0;width:24px;height:24px;line-height:24px;border-radius:50%" onclick="adminInfoOpen('username')">?</button><input class="input" type="text" name="username" required placeholder="ej: QMCon165"></label></div>
       <div class="field"><label>Contraseña
         <div style="display:flex;gap:8px">
           <input class="input" type="text" name="password" id="genPassword" required placeholder="temporal" style="flex:1">
@@ -46,10 +48,11 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
         </div>
       </label></div>
       <div class="field"><label>URL<input class="input" type="text" name="drive_url" placeholder="https://drive.google.com/..."></label></div>
-      <div class="field"><label>Correo<input class="input" type="email" name="email" placeholder="correo@dominio.com"></label></div>
-      <div class="field"><label>Alias<input class="input" type="text" name="alias" placeholder="ej: 120W"></label></div>
-      <div class="field"><label>Valida<select class="input" disabled><option value="0">No</option></select></label></div>
-      <div class="field"><label>Portal activo<select class="input" name="portal"><option value="1">Sí</option><option value="0">No</option></select></label></div>
+      <div class="field"><label>Correo<button type="button" class="btn secondary" style="margin-left:6px;padding:0;width:24px;height:24px;line-height:24px;border-radius:50%" onclick="adminInfoOpen('emails')">?</button><input class="input" type="email" name="email" multiple placeholder="correo@dominio.com, otro@dominio.com"></label></div>
+      <div class="field"><label>Alias<button type="button" class="btn secondary" style="margin-left:6px;padding:0;width:24px;height:24px;line-height:24px;border-radius:50%" onclick="adminInfoOpen('alias')">?</button><input class="input" type="text" name="alias" placeholder="ej: MEDIOS CON VALOR QRO"></label></div>
+      <div class="field"><label>Sucursal<select class="input" id="branchSel"><option value="Q">Querétaro</option><option value="A">Aguascalientes</option><option value="M">Monterrey</option></select></label></div>
+      <div class="field"><label>¿Se envió correo con claves?<button type="button" class="btn secondary" style="margin-left:6px;padding:0;width:24px;height:24px;line-height:24px;border-radius:50%" onclick="adminInfoOpen('valid')">?</button><select class="input" disabled><option value="0">No</option></select></label></div>
+      <div class="field"><label>Acceso a portal<button type="button" class="btn secondary" style="margin-left:6px;padding:0;width:24px;height:24px;line-height:24px;border-radius:50%" onclick="adminInfoOpen('portal')">?</button><select class="input" name="portal"><option value="1">Sí</option><option value="0">No</option></select></label></div>
       <div class="actions"><button type="submit" class="btn">Crear</button><a class="btn secondary" href="/admin">Volver</a></div>
     </form>
   </div>
@@ -72,6 +75,23 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
     return s;
   }
   if(btn&&out){ btn.addEventListener('click',function(){ out.value=gen(); out.focus(); out.select(); try{ document.execCommand('copy'); }catch(_){ } }); }
+})();
+</script>
+<script>
+(function(){
+  var aliasInp=document.querySelector('input[name="alias"]');
+  var userInp=document.querySelector('input[name="username"]');
+  var branchSel=document.getElementById('branchSel');
+  var api=document.body.getAttribute('data-users-api')||'';
+  var count=0;
+  function proper(s){ s=String(s||'').toLowerCase(); return s? (s[0].toUpperCase()+s.slice(1)) : ''; }
+  function initial(s){ var m=String(s||'').trim().match(/[A-Za-zÁÉÍÓÚÜÑ]/); return (m? m[0] : '').toUpperCase().replace('Á','A').replace('É','E').replace('Í','I').replace('Ó','O').replace('Ú','U').replace('Ü','U').replace('Ñ','N'); }
+  function pickWord(alias){ var toks=String(alias||'').trim().split(/\s+/); if(toks.length<=1) return toks[0]||''; for(var i=1;i<toks.length;i++){ if(/[A-Za-zÁÉÍÓÚÜÑ]/.test(toks[i])) return toks[i]; } return toks[0]||''; }
+  function build(){ var b=(branchSel&&branchSel.value)||'Q'; var a=aliasInp?aliasInp.value:''; var first=initial(a); var word=proper(pickWord(a)); var num=(count>0)?(count+1):Math.floor(100+Math.random()*900); var s=(b||'Q')+(first||'X')+word+String(num); if(userInp){ userInp.value=s; } }
+  function getCount(){ if(!api) { build(); return; } try{ fetch(api+'?action=users',{credentials:'omit'}).then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok&&j.users){ try{ count=Object.keys(j.users).length||0; }catch(_){ count=0; } } }).finally(build); }catch(_){ build(); } }
+  if(aliasInp){ aliasInp.addEventListener('input',build); aliasInp.addEventListener('blur',build); }
+  if(branchSel){ branchSel.addEventListener('change',build); }
+  getCount();
 })();
 </script>
 <?php include dirname(__DIR__).'/../layout/footer.php'; ?>

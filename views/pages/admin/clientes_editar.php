@@ -18,6 +18,7 @@ if($u!==''){
     $password=trim($_POST['password']??'');
     $drive_url=trim($_POST['drive_url']??'');
     $email=trim($_POST['email']??'');
+    if($email!==''){ $parts=array_map('trim', explode(',', $email)); $parts=array_filter($parts,function($s){ return $s!==''; }); $email=implode(',', $parts); }
     $alias=trim($_POST['alias']??'');
     $valid=isset($_POST['valid'])?trim($_POST['valid']):'';
     $portal=isset($_POST['portal'])?trim($_POST['portal']):'1';
@@ -47,6 +48,7 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
 <html lang="es"><head><?php $pageTitle='Editar usuario'; include dirname(__DIR__).'/../layout/head.php'; ?></head>
 <body>
 <?php include dirname(__DIR__).'/../layout/header.php'; ?>
+<?php include dirname(__DIR__).'/../layout/modal_admins.php'; ?>
 <main class="container">
   <div class="card">
     <h2 class="title">Editar usuario</h2>
@@ -56,10 +58,10 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
       <div class="field"><label>Usuario<input class="input" type="text" name="username" required value="<?php echo htmlspecialchars($dataUser['username']??$u); ?>" readonly></label></div>
       <div class="field"><label>Contraseña<input class="input" type="text" name="password" placeholder="(opcional para cambiar)"></label></div>
       <div class="field"><label>URL<input class="input" type="text" name="drive_url" value="<?php echo htmlspecialchars($dataUser['drive_url']??''); ?>"></label></div>
-      <div class="field"><label>Correo<input class="input" type="email" name="email" value="<?php echo htmlspecialchars($dataUser['email']??''); ?>"></label></div>
+      <div class="field"><label>Correo<button type="button" class="btn secondary" style="margin-left:6px;padding:0;width:24px;height:24px;line-height:24px;border-radius:50%" onclick="adminInfoOpen('emails')">?</button><input class="input" type="email" name="email" multiple value="<?php echo htmlspecialchars($dataUser['email']??''); ?>" placeholder="correo@dominio.com, otro@dominio.com"></label></div>
       <div class="field"><label>Alias<input class="input" type="text" name="alias" value="<?php echo htmlspecialchars($dataUser['alias']??''); ?>"></label></div>
-      <div class="field"><label>Valida<select class="input" name="valid"><option value="1" <?php echo intval($dataUser['valid']??0)===1?'selected':''; ?>>Sí</option><option value="0" <?php echo intval($dataUser['valid']??0)===0?'selected':''; ?>>No</option></select></label></div>
-      <div class="field"><label>Portal activo<select class="input" name="portal"><option value="1" <?php echo intval($dataUser['portal_enabled']??1)===1?'selected':''; ?>>Sí</option><option value="0" <?php echo intval($dataUser['portal_enabled']??1)===0?'selected':''; ?>>No</option></select></label></div>
+      <div class="field"><label>¿Se envió correo con claves?<button type="button" class="btn secondary" style="margin-left:6px;padding:0;width:24px;height:24px;line-height:24px;border-radius:50%" onclick="adminInfoOpen('valid')">?</button><select class="input" name="valid"><option value="1" <?php echo intval($dataUser['valid']??0)===1?'selected':''; ?>>Sí</option><option value="0" <?php echo intval($dataUser['valid']??0)===0?'selected':''; ?>>No</option></select></label></div>
+      <div class="field"><label>Acceso a portal<button type="button" class="btn secondary" style="margin-left:6px;padding:0;width:24px;height:24px;line-height:24px;border-radius:50%" onclick="adminInfoOpen('portal')">?</button><select class="input" name="portal"><option value="1" <?php echo intval($dataUser['portal_enabled']??1)===1?'selected':''; ?>>Sí</option><option value="0" <?php echo intval($dataUser['portal_enabled']??1)===0?'selected':''; ?>>No</option></select></label></div>
       <div class="actions"><button type="submit" class="btn">Guardar</button><a class="btn secondary" href="/admin">Volver</a></div>
     </form>
   </div>
