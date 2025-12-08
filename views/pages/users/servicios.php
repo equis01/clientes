@@ -1,11 +1,11 @@
 <?php
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
-if(!isset($_SESSION['user'])){header('Location: /login');exit;}
-if(isset($_GET['alias'])){ $p=$_GET; unset($p['alias']); $q=count($p)?('?'.http_build_query($p)):''; header('Location: servicios.php'.$q); exit; }
-require_once __DIR__.'/../../config/config.php';
-require_once __DIR__.'/../../lib/env.php';
-require_once __DIR__.'/../../lib/gas.php';
-require_once __DIR__.'/../../lib/format.php';
+if(!isset($_SESSION['user'])){header('Location: /users/login');exit;}
+if(isset($_GET['alias'])){ $p=$_GET; unset($p['alias']); $q=count($p)?('?'.http_build_query($p)):''; header('Location: /users/servicios'.$q); exit; }
+require_once dirname(__DIR__,3).'/config/config.php';
+require_once dirname(__DIR__,3).'/lib/env.php';
+require_once dirname(__DIR__,3).'/lib/gas.php';
+require_once dirname(__DIR__,3).'/lib/format.php';
 $tzTmp=env('TIMEZONE','America/Mexico_City');
 if(isset($_GET['generate_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
   header('Content-Type: application/json; charset=utf-8');
@@ -89,10 +89,10 @@ $gasReal=$res['url'];
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <?php $pageTitle='Servicios'; include __DIR__.'/../layout/head.php'; ?>
+  <?php $pageTitle='Servicios'; include dirname(__DIR__,2).'/layout/head.php'; ?>
 </head>
 <body>
-  <?php include __DIR__.'/../layout/header.php'; ?>
+  <?php include dirname(__DIR__,2).'/layout/header.php'; ?>
   <main class="container">
     <div class="card">
       <h2 class="title">Servicios</h2>
@@ -100,7 +100,7 @@ $gasReal=$res['url'];
       <?php if(!empty($periodo['activo'])){ ?>
         <div>Periodo: <?php echo htmlspecialchars($todoAnio?('Año '.$anio):(($periodo['mesTexto']?:'') . ' ' . ($periodo['anio']?:''))); ?></div>
       <?php } ?>
-      <form method="get" action="/servicios" class="filter">
+      <form method="get" action="/users/servicios" class="filter">
         <?php $meses=[1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre']; ?>
         <div class="field">
           <label for="mes">Mes</label>
@@ -229,7 +229,7 @@ $gasReal=$res['url'];
       startDotsOn(status,'Generando');
       var aSel2=document.getElementById('alias_sel'); var aVal=(aSel2&&aSel2.value)||'';
       var bodyFind='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal);
-      fetch('/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind})
+      fetch('/users/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind})
         .then(function(r){ return r.json(); })
         .then(function(f){
           if(f&&f.ok){
@@ -248,7 +248,7 @@ $gasReal=$res['url'];
             var bodyGen='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal);
             status.classList.remove('err');
             startDotsOn(status,'Generando');
-            fetch('/servicios?generate_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyGen})
+            fetch('/users/servicios?generate_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyGen})
               .then(function(r2){ return r2.json(); })
               .then(function(j){
                 if(j&&j.ok){
@@ -318,6 +318,6 @@ $gasReal=$res['url'];
     </div>
   </div>
   <?php } ?>
-  <?php include __DIR__.'/../layout/footer.php'; ?>
+  <?php include dirname(__DIR__,2).'/layout/footer.php'; ?>
 </body>
 </html>

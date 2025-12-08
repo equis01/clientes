@@ -1,10 +1,10 @@
 <?php
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
-if(!isset($_SESSION['user'])){header('Location: /login');exit;}
-if(isset($_GET['alias'])){ $p=$_GET; unset($p['alias']); $q=count($p)?('?'.http_build_query($p)):''; header('Location: reportes.php'.$q); exit; }
-require_once __DIR__.'/../../config/config.php';
-require_once __DIR__.'/../../lib/env.php';
-require_once __DIR__.'/../../lib/gas.php';
+if(!isset($_SESSION['user'])){header('Location: /users/login');exit;}
+if(isset($_GET['alias'])){ $p=$_GET; unset($p['alias']); $q=count($p)?('?'.http_build_query($p)):''; header('Location: /users/reportes'.$q); exit; }
+require_once dirname(__DIR__,3).'/config/config.php';
+require_once dirname(__DIR__,3).'/lib/env.php';
+require_once dirname(__DIR__,3).'/lib/gas.php';
 $client=isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user'];
 $reportes=[];
 $resp=gas_exec(['service'=>'bd','action'=>'metrics','alias'=>$client]);
@@ -15,10 +15,10 @@ if($resp['ok'] && is_array($resp['data']) && isset($resp['data']['reportes']) &&
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <?php $pageTitle='Reportes'; include __DIR__.'/../layout/head.php'; ?>
+  <?php $pageTitle='Reportes'; include dirname(__DIR__,2).'/layout/head.php'; ?>
 </head>
 <body>
-  <?php include __DIR__.'/../layout/header.php'; ?>
+  <?php include dirname(__DIR__,2).'/layout/header.php'; ?>
   <main class="container">
     <div class="card">
       <h2 class="title">Reportes</h2>
@@ -31,6 +31,6 @@ if($resp['ok'] && is_array($resp['data']) && isset($resp['data']['reportes']) &&
       </ul>
     </div>
   </main>
-  <?php include __DIR__.'/../layout/footer.php'; ?>
+  <?php include dirname(__DIR__,2).'/layout/footer.php'; ?>
 </body>
 </html>

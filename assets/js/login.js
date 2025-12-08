@@ -22,17 +22,27 @@ document.addEventListener('DOMContentLoaded',function(){
       if(data&&data.ok){
         var uname=document.getElementById('username').value.trim();
         if(data.admin){ window.location.href='/admin'; return; }
-        window.location.href='/portal';
+        window.location.href='/users';
       }else{
-        if(data && data.code==='portal_disabled'){
-          var m=document.getElementById('portalModal'); var c=document.getElementById('portalClose');
-          if(m){ m.style.display='flex'; if(c){ c.onclick=function(){ m.style.display='none'; }; }
-          } else { alert('Tu acceso al portal está restringido.'); }
-        } else {
-          showModal((data&&data.error)||'Nombre de usuario o contraseña incorrectos');
-        }
-        submitBtn.value='INGRESAR';
-        submitBtn.disabled=false;
+        var email=document.getElementById('username').value.trim();
+        var pass=document.getElementById('password').value.trim();
+        var bodyAdmin=new URLSearchParams({admin_email:email,admin_password:pass});
+        fetch('/auth',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyAdmin})
+          .then(function(r2){ return r2.json(); })
+          .then(function(d2){
+            if(d2 && d2.ok && d2.admin){ window.location.href='/admin'; }
+            else {
+              if(data && data.code==='portal_disabled'){
+                var m=document.getElementById('portalModal'); var c=document.getElementById('portalClose');
+                if(m){ m.style.display='flex'; if(c){ c.onclick=function(){ m.style.display='none'; }; } }
+                else { alert('Tu acceso al portal está restringido.'); }
+              } else {
+                showModal((data&&data.error)||'Nombre de usuario o contraseña incorrectos');
+              }
+              submitBtn.value='INGRESAR'; submitBtn.disabled=false;
+            }
+          })
+          .catch(function(){ showModal('Error de conexión'); submitBtn.value='INGRESAR'; submitBtn.disabled=false; });
       }
     })
     .catch(function(){
@@ -44,13 +54,7 @@ document.addEventListener('DOMContentLoaded',function(){
   function onEnter(e){ if(e.key==='Enter'){ e.preventDefault(); submitBtn.click(); } }
   document.getElementById('username').addEventListener('keydown',onEnter);
   document.getElementById('password').addEventListener('keydown',onEnter);
-  var teamBtn=document.getElementById('team-login');
-  if(teamBtn){
-    teamBtn.addEventListener('click',function(e){
-      e.preventDefault();
-      window.location.href='/admin/login';
-    });
-  }
+  
 
   // Manejar resultado de redirect (para navegadores con bloqueo de popup/cookies)
   

@@ -1,11 +1,11 @@
 <?php
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
-if(!isset($_SESSION['user'])){header('Location: /login');exit;}
-require_once __DIR__.'/../../config/config.php';
-require_once __DIR__.'/../../lib/env.php';
-require_once __DIR__.'/../../lib/db.php';
+if(!isset($_SESSION['user'])){header('Location: /users/login');exit;}
+require_once dirname(__DIR__,3).'/config/config.php';
+require_once dirname(__DIR__,3).'/lib/env.php';
+require_once dirname(__DIR__,3).'/lib/db.php';
 $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']);
-require_once __DIR__.'/../../lib/gas.php';
+require_once dirname(__DIR__,3).'/lib/gas.php';
 $rec=gas_users(isset($_SESSION['user'])?$_SESSION['user']:null);
 if($rec['ok'] && is_array($rec['user'])){
   $alias=isset($rec['user']['alias'])?$rec['user']['alias']:'';
@@ -47,10 +47,10 @@ if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD']==='POST'){
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <?php $pageTitle='Configuración'; include __DIR__.'/../layout/head.php'; ?>
+  <?php $pageTitle='Configuración'; include dirname(__DIR__,2).'/layout/head.php'; ?>
 </head>
 <body>
-  <?php include __DIR__.'/../layout/header.php'; ?>
+  <?php include dirname(__DIR__,2).'/layout/header.php'; ?>
   <main class="container">
     <div class="card">
       <h2 class="title">Configuración</h2>
@@ -76,6 +76,6 @@ if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD']==='POST'){
       </form>
     </div>
   </main>
-  <?php include __DIR__.'/../layout/footer.php'; ?>
+  <?php include dirname(__DIR__,2).'/layout/footer.php'; ?>
 </body>
 </html>

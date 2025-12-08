@@ -46,47 +46,55 @@ if(isset($_SESSION['is_admin']) && $_SESSION['is_admin']){
 }
 switch(rtrim($uri,'/')){
   case '':
-    if(isset($_SESSION['user'])){ header('Location: /users'); exit; }
-    else { require dirname(__DIR__).'/views/pages/login.php'; }
+    if(isset($_SESSION['user'])){ if(!empty($_SESSION['is_admin'])){ header('Location: /admin'); } else { header('Location: /users'); } exit; }
+    else { header('Location: /login'); exit; }
     break;
   case '/users':
-    require dirname(__DIR__).'/views/pages/portal.php';
+    $b=dirname(__DIR__);
+    $pIndex=$b.'/views/pages/users/index.php';
+    $pPortal=$b.'/views/pages/users/portal.php';
+    if(is_file($pIndex)){ require $pIndex; }
+    else if(is_file($pPortal)){ require $pPortal; }
+    else { require $b.'/views/pages/portal.php'; }
     break;
   case '/login':
-    require dirname(__DIR__).'/views/pages/login.php';
+    $b=dirname(__DIR__); $p=$b.'/views/pages/shared/login.php'; if(is_file($p)){ require $p; } else { $p2=$b.'/views/pages/users/login.php'; if(is_file($p2)){ require $p2; } else { require $b.'/views/pages/login.php'; } }
+    break;
+  case '/users/login':
+    header('Location: /login'); exit;
     break;
   case '/logout':
-    require dirname(__DIR__).'/views/pages/logout.php';
+    $b=dirname(__DIR__); $p=$b.'/views/pages/shared/logout.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/logout.php'; }
     break;
   case '/servicios':
     header('Location: /users/servicios'); exit;
     break;
   case '/users/servicios':
-    require dirname(__DIR__).'/views/pages/servicios.php';
+    $b=dirname(__DIR__); $p=$b.'/views/pages/users/servicios.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/servicios.php'; }
     break;
   case '/finanzas':
     header('Location: /users/finanzas'); exit;
     break;
   case '/users/finanzas':
-    require dirname(__DIR__).'/views/pages/finanzas.php';
+    $b=dirname(__DIR__); $p=$b.'/views/pages/users/finanzas.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/finanzas.php'; }
     break;
   case '/reportes':
     header('Location: /users/reportes'); exit;
     break;
   case '/users/reportes':
-    require dirname(__DIR__).'/views/pages/reportes.php';
+    $b=dirname(__DIR__); $p=$b.'/views/pages/users/reportes.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/reportes.php'; }
     break;
   case '/configuracion':
-    require dirname(__DIR__).'/views/pages/configuracion.php';
+    header('Location: /users/configuracion'); exit;
     break;
   case '/portal':
-    header('Location: /users/portal'); exit;
+    header('Location: /users'); exit;
     break;
   case '/users/portal':
-    require dirname(__DIR__).'/views/pages/portal.php';
+    header('Location: /users'); exit;
     break;
   case '/carpetas':
-    header('Location: /users/portal'); exit;
+    header('Location: /users'); exit;
     break;
   case '/auth':
     require dirname(__DIR__).'/config/auth.php';
@@ -98,7 +106,7 @@ switch(rtrim($uri,'/')){
     require dirname(__DIR__).'/views/pages/admin/clientes.php';
     break;
   case '/admin/login':
-    require dirname(__DIR__).'/views/pages/admin/login.php';
+    header('Location: /login'); exit;
     break;
   case '/admin/invitaciones':
     require dirname(__DIR__).'/views/pages/admin/invitaciones.php';
@@ -119,10 +127,10 @@ switch(rtrim($uri,'/')){
     require dirname(__DIR__).'/views/pages/admin/super.php';
     break;
   case '/errores':
-    require dirname(__DIR__).'/views/pages/errores.php';
+    $b=dirname(__DIR__); $p=$b.'/views/pages/shared/errores.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/errores.php'; }
     break;
   default:
     http_response_code(404);
     $_GET['code']=404; $_GET['path']=$uri;
-    require dirname(__DIR__).'/views/pages/errores.php';
+    $b=dirname(__DIR__); $p=$b.'/views/pages/shared/errores.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/errores.php'; }
 }

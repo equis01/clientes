@@ -1,8 +1,8 @@
-<?php if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); } if(isset($_SESSION['user'])){header('Location: /portal');exit;} $client=''; ?>
+<?php if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); } if(isset($_SESSION['user'])){header('Location: /users');exit;} $client=''; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <?php $pageTitle='Login'; include __DIR__.'/../layout/head.php'; ?>
+  <?php $pageTitle='Login'; include dirname(__DIR__,2).'/layout/head.php'; ?>
   <link rel="stylesheet" href="/assets/css/login.css">
 </head>
 <body>
@@ -31,9 +31,6 @@
           <input type="submit" id="submit" value="INGRESAR">
           <p class="forgot-password">
             <a href="#" id="forgot-password">¿Olvidó su usuario, o contraseña?</a>
-          </p>
-          <p class="forgot-password">
-            <a href="/admin/login" id="team-login">¿Perteneces al team de Medios con Valor?</a>
           </p>
           <div id="portalModal" class="modal" style="display:none">
             <div class="modal-content">

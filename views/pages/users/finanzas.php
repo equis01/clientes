@@ -1,11 +1,11 @@
 <?php
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
-if(!isset($_SESSION['user'])){header('Location: /login');exit;}
-if(isset($_GET['alias'])){ $p=$_GET; unset($p['alias']); $q=count($p)?('?'.http_build_query($p)):''; header('Location: finanzas.php'.$q); exit; }
-require_once __DIR__.'/../../config/config.php';
-require_once __DIR__.'/../../lib/env.php';
-require_once __DIR__.'/../../lib/gas.php';
-require_once __DIR__.'/../../lib/format.php';
+if(!isset($_SESSION['user'])){header('Location: /users/login');exit;}
+if(isset($_GET['alias'])){ $p=$_GET; unset($p['alias']); $q=count($p)?('?'.http_build_query($p)):''; header('Location: /users/finanzas'.$q); exit; }
+require_once dirname(__DIR__,3).'/config/config.php';
+require_once dirname(__DIR__,3).'/lib/env.php';
+require_once dirname(__DIR__,3).'/lib/gas.php';
+require_once dirname(__DIR__,3).'/lib/format.php';
 $client=isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user'];
 $brand=isset($_SESSION['brand_name'])?$_SESSION['brand_name']:null;
 if(!$brand && $client){ $fin0=gas_finanzas($client); if($fin0['ok'] && is_array($fin0['data'])){ $_SESSION['brand_name']=isset($fin0['data']['razonSocial'])?$fin0['data']['razonSocial']:($_SESSION['brand_name']??null); $brand=$_SESSION['brand_name']; } }
@@ -33,15 +33,15 @@ $serviciosFmt=(is_string($servicios)&&is_numeric(str_replace(',','.', $servicios
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <?php $pageTitle='Finanzas'; include __DIR__.'/../layout/head.php'; ?>
+  <?php $pageTitle='Finanzas'; include dirname(__DIR__,2).'/layout/head.php'; ?>
 </head>
 <body>
-  <?php include __DIR__.'/../layout/header.php'; ?>
+  <?php include dirname(__DIR__,2).'/layout/header.php'; ?>
   <main class="container">
     <div class="card">
       <h2 class="title">Finanzas</h2>
       <?php if(count($aliases)>1){ ?>
-      <form method="get" action="/finanzas" class="filter" style="margin-bottom:12px">
+      <form method="get" action="/users/finanzas" class="filter" style="margin-bottom:12px">
         <div class="field">
           <label for="alias_sel">Alias</label>
           <select id="alias_sel" name="alias_sel">
@@ -84,7 +84,7 @@ $serviciosFmt=(is_string($servicios)&&is_numeric(str_replace(',','.', $servicios
       <div class="actions"><button type="button" class="btn" id="excesoOk">Entendido</button></div>
     </div>
   </div>
-  <?php include __DIR__.'/../layout/footer.php'; ?>
+  <?php include dirname(__DIR__,2).'/layout/footer.php'; ?>
   <script>
   (function(){
     var form=document.querySelector('form.filter');

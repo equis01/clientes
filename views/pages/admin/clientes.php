@@ -81,7 +81,6 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
               <th style="text-align:left">Usuario</th>
               <th style="text-align:left">Alias</th>
               <th style="text-align:left">Correo</th>
-              <th style="text-align:left">URL</th>
               <th style="text-align:left">Acceso a portal <button type="button" class="btn secondary" style="margin-left:4px;padding:0;width:22px;height:22px;line-height:22px;border-radius:50%" onclick="adminInfoOpen('portal')">?</button></th>
               <th style="text-align:left">Editar</th>
             </tr>
@@ -94,8 +93,11 @@ $client=(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['use
                 <td><?php echo htmlspecialchars($u['username']??''); ?></td>
                 <td><?php echo htmlspecialchars($u['alias']??''); ?></td>
                 <td><?php echo htmlspecialchars($u['email']??''); ?></td>
-                <td><a target="_blank" href="<?php echo htmlspecialchars($u['drive_url']??'#'); ?>">abrir</a></td>
-                <td><?php echo intval($u['portal_enabled']??1)===1?'✔':'✘'; ?></td>
+                <td>
+                  <?php $enabled=(intval($u['portal_enabled']??1)===1); $du=trim((string)($u['drive_url']??'')); if($enabled && $du!==''){ ?>
+                    <a target="_blank" href="<?php echo htmlspecialchars($du); ?>" title="Abrir carpeta integral">✔</a>
+                  <?php } else { echo '✘'; } ?>
+                </td>
                 <td><button class="btn secondary" type="button" data-edit="<?php echo htmlspecialchars($u['username']??''); ?>">Editar</button></td>
               </tr>
             <?php } } ?>
