@@ -3,6 +3,7 @@ if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
 if(empty($_SESSION['is_admin'])){ http_response_code(403); header('Location: /errores?code=403&msg=Acceso restringido'); exit; }
 require_once dirname(__DIR__,3).'/lib/env.php';
 require_once dirname(__DIR__,3).'/lib/format.php';
+require_once dirname(__DIR__,3).'/lib/db.php';
 function smtp_send($host,$port,$secure,$user,$pass,$to,$subject,$body,$from){
   $timeout=25; $errno=0; $errstr='';
   if($secure==='ssl'){ $host='ssl://'.$host; }
@@ -41,11 +42,7 @@ function smtp_send($host,$port,$secure,$user,$pass,$to,$subject,$body,$from){
 }
 if(!isset($_SESSION['user'])){header('Location: /login');exit;}
 
-$jsonPath=dirname(__DIR__,3).'/data/admin.json';
-$store=['admins'=>[],'invites'=>[]];
-if(is_file($jsonPath)){
-  $raw=@file_get_contents($jsonPath); $j=$raw?json_decode($raw,true):null; if(is_array($j)) $store=$j;
-}
+$invitesStore=listInvites();
 $msg=null;$err=null;$created=null;
 if($_SERVER['REQUEST_METHOD']==='POST'){
   $email=strtolower(trim($_POST['email']??''));
@@ -53,36 +50,20 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   $days=intval($_POST['days']??7); if($days<1) $days=7; if($days>90) $days=90;
   if($email==='' || !preg_match('/@mediosconvalor\.com$/i',$email)){ $err='Correo inválido (solo @mediosconvalor.com)'; }
   else {
-    $existsAdmin=false; foreach(($store['admins']??[]) as $a){ if(strtolower($a['email']??'')===$email){ $existsAdmin=true; break; } }
+    $existsAdmin=is_array(findAdminByEmail($email));
     if($existsAdmin){ $err='Ya existe una cuenta para este correo'; }
     if(!$err){
-      $hasActiveInvite=false;
-      foreach(($store['invites']??[]) as $i){
-        $same=strtolower($i['email']??'')===$email;
-        $used=!empty($i['usedAt']);
-        $exp=strtotime($i['expiresAt']??''); $expired=($exp!==false && time()>$exp);
-        if($same && !$used && !$expired){ $hasActiveInvite=true; break; }
-      }
+      $hasActiveInvite=hasActiveInviteForEmail($email);
       if($hasActiveInvite){ $err='Ya existe una invitación activa para este correo'; }
     }
     if(!$err){
       $token=bin2hex(random_bytes(16));
       $expiresAt=date('c', time()+($days*86400));
-      $inv=[
-        'email'=>$email,
-        'name'=>$name,
-        'token'=>$token,
-        'inviteLink'=>'/admin/invite?token='.$token,
-        'invitedBy'=>$_SESSION['user'],
-        'expiresAt'=>$expiresAt,
-        'createdAt'=>date('c'),
-      ];
-      $store['invites'][]=$inv;
-      @file_put_contents($jsonPath, json_encode($store, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));
-      $created=$inv['inviteLink'];
+      createInvite($email,$name,$token,$_SESSION['user'],$expiresAt);
+      $created='/admin/invite?token='.$token;
       $to=$email; $subject='Invitación al portal de admins';
       $host=isset($_SERVER['HTTP_HOST'])?('https://'.$_SERVER['HTTP_HOST']):'';
-      $link=$host.$inv['inviteLink'];
+      $link=$host.$created;
       $body='<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f6f7f9">'
         .'<div style="max-width:600px;margin:20px auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#0b1222">'
         .'<h2 style="margin:0 0 12px;font-size:20px">Invitación al portal de administradores</h2>'
@@ -138,7 +119,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         <thead><tr><th>Email</th><th>Invitó</th><th>Caduca</th><th>Enlace</th></tr></thead>
         <tbody>
           <?php
-            $invites=is_array($store['invites']??null)?$store['invites']:[];
+            $invites=is_array($invitesStore??null)?$invitesStore:[];
             $q=strtolower(trim($_GET['q']??''));
             $invites=array_values($invites);
             if($q!==''){

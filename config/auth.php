@@ -60,6 +60,7 @@ if(isset($_GET['ping'])){
   $resp = array(
     'ok'=>true,
     'php'=>PHP_VERSION,
+    'pdo_mysql'=>extension_loaded('pdo_mysql'),
     'pdo_sqlite'=>extension_loaded('pdo_sqlite'),
     'sqlite3'=>extension_loaded('sqlite3'),
     'curl'=>function_exists('curl_init'),
@@ -81,13 +82,11 @@ if(isset($_POST['google_id_token'])){
   $isAdmin=function_exists('str_ends_with') ? str_ends_with($email, ADMIN_DOMAIN) : (substr($email, -strlen(ADMIN_DOMAIN))===ADMIN_DOMAIN);
   if($isAdmin){
     $_SESSION['user']=$email; $_SESSION['client_name']='Admin'; $_SESSION['folder_url']=null; $_SESSION['is_admin']=true; $_SESSION['is_super_admin']=in_array($email,['rsaucedo@mediosconvalor.com','aguzman@mediosconvalor.com','sistemas@mediosconvalor.com'],true);
+    $t=createSessionToken('admin',$email,30,'light'); if($t){ setcookie('mcv_token',$t,['expires'=>time()+2592000,'path'=>'/','secure'=>isset($_SERVER['HTTPS']),'httponly'=>true,'samesite'=>'Lax']); }
     echo '{"ok":true,"admin":true}'; exit;
+  } else {
+    echo '{"ok":false,"error":"No autorizado"}'; exit;
   }
-  $u=findUserByEmail($email);
-  if(!$u||intval($u['valid'])!==1){echo '{"ok":false,"error":"Usuario inactivo o no encontrado"}';exit;}
-  if(REQUIRE_Q_PREFIX && strtoupper(substr($u['username'],0,1))!=='Q'){echo '{"ok":false,"error":"Solo QRO"}';exit;}
-  $_SESSION['user']=$u['username']; $_SESSION['client_name']=$u['alias']?:$u['username']; $_SESSION['folder_url']=$u['drive_url']; $_SESSION['is_admin']=false;
-  echo '{"ok":true}'; exit;
 }
 
 if(isset($_POST['firebase_id_token'])){
@@ -113,6 +112,7 @@ if(isset($_POST['firebase_id_token'])){
   $isAdmin=function_exists('str_ends_with') ? str_ends_with($email, ADMIN_DOMAIN) : (substr($email, -strlen(ADMIN_DOMAIN))===ADMIN_DOMAIN);
   if(!$isAdmin){ echo '{"ok":false,"error":"No autorizado"}'; exit; }
   $_SESSION['user']=$email; $_SESSION['client_name']='Admin'; $_SESSION['folder_url']=null; $_SESSION['is_admin']=true; $_SESSION['is_super_admin']=in_array($email,['rsaucedo@mediosconvalor.com','aguzman@mediosconvalor.com','sistemas@mediosconvalor.com'],true);
+  $t=createSessionToken('admin',$email,30,'light'); if($t){ setcookie('mcv_token',$t,['expires'=>time()+2592000,'path'=>'/','secure'=>isset($_SERVER['HTTPS']),'httponly'=>true,'samesite'=>'Lax']); }
   echo '{"ok":true,"admin":true}'; exit;
 }
 
@@ -122,12 +122,17 @@ if(isset($_POST['admin_email']) && isset($_POST['admin_password'])){
   if($email===''||$pass===''){echo '{"ok":false,"error":"Faltan datos"}';exit;}
   $isAdminDomain=function_exists('str_ends_with') ? str_ends_with($email, ADMIN_DOMAIN) : (substr($email, -strlen(ADMIN_DOMAIN))===ADMIN_DOMAIN);
   if(!$isAdminDomain){ echo '{"ok":false,"error":"Dominio no permitido"}'; exit; }
+  ensureSchema();
+  if(!hasAnyAdmins()){ migrateAdminsFromJson(); }
   $ok=false; $name='Admin';
-  $jsonPath=dirname(__DIR__).'/data/admin.json';
-  $list=[]; if(file_exists($jsonPath)){ $raw=@file_get_contents($jsonPath); $j=$raw?json_decode($raw,true):null; if(is_array($j)&&isset($j['admins'])&&is_array($j['admins'])) $list=$j['admins']; }
-  foreach($list as $a){ $ae=strtolower($a['email']??''); if($ae===$email){ $hash=$a['password_hash']??''; $plain=$a['password']??''; $name=$a['name']??$name; if($hash){ $ok=password_verify($pass,$hash); } else if($plain){ $ok=($pass===$plain); } break; } }
+  $a=findAdminByEmail($email);
+  if(is_array($a)){
+    $hash=$a['password_hash']??''; $plain=''; $name=$a['name']??$name;
+    if($hash){ $ok=password_verify($pass,$hash) || trim($pass)===trim($hash); }
+  }
   if(!$ok){ echo '{"ok":false,"error":"Credenciales inválidas"}'; exit; }
   $_SESSION['user']=$email; $_SESSION['client_name']=$name; $_SESSION['folder_url']=null; $_SESSION['is_admin']=true; $_SESSION['is_super_admin']=in_array($email,['rsaucedo@mediosconvalor.com','aguzman@mediosconvalor.com','sistemas@mediosconvalor.com'],true);
+  $t=createSessionToken('admin',$email,30,'light'); if($t){ setcookie('mcv_token',$t,['expires'=>time()+2592000,'path'=>'/','secure'=>isset($_SERVER['HTTPS']),'httponly'=>true,'samesite'=>'Lax']); }
   echo '{"ok":true,"admin":true}'; exit;
 }
 
@@ -167,6 +172,7 @@ if($isQ){
   $_SESSION['client_name']=(isset($u['alias'])&&$u['alias']!=='')?$u['alias']:$username;
   $_SESSION['folder_url']=isset($u['drive_url'])?$u['drive_url']:null;
   $_SESSION['is_admin']=$isAdmin;
+  $t=createSessionToken('user',$username,30,'light'); if($t){ setcookie('mcv_token',$t,['expires'=>time()+2592000,'path'=>'/','secure'=>isset($_SERVER['HTTPS']),'httponly'=>true,'samesite'=>'Lax']); }
   echo json_encode([
     'ok'=>true,
     'admin'=>$isAdmin?true:false,
@@ -188,6 +194,7 @@ if($isQ){
       $ok=!empty($data['ok']);
       if(!$ok || $url===''){ echo '{"ok":false,"error":"Credenciales inválidas"}'; exit; }
       $_SESSION['user']=$username; $_SESSION['client_name']=$username; $_SESSION['folder_url']=$url; $_SESSION['is_admin']=false;
+      $t=createSessionToken('user',$username,30,'light'); if($t){ setcookie('mcv_token',$t,['expires'=>time()+2592000,'path'=>'/','secure'=>isset($_SERVER['HTTPS']),'httponly'=>true,'samesite'=>'Lax']); }
       $usersBase=env('GAS_USERS_Q_URL');
       if($usersBase){
         $uurl=$usersBase.'?action=users&user='.urlencode($username);
@@ -205,6 +212,7 @@ if($isQ){
       if(strtolower($text)==='null'){echo '{"ok":false,"error":"Portal restringido","code":"portal_disabled"}';exit;}
       if($text===''){echo '{"ok":false,"error":"Credenciales inválidas"}';exit;}
       $_SESSION['user']=$username; $_SESSION['client_name']=$username; $_SESSION['folder_url']=$text; $_SESSION['is_admin']=false;
+      $t=createSessionToken('user',$username,30,'light'); if($t){ setcookie('mcv_token',$t,['expires'=>time()+2592000,'path'=>'/','secure'=>isset($_SERVER['HTTPS']),'httponly'=>true,'samesite'=>'Lax']); }
       $usersBase=env('GAS_USERS_Q_URL');
       if($usersBase){
         $uurl=$usersBase.'?action=users&user='.urlencode($username);

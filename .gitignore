@@ -3,4 +3,4 @@ data/*
 *.log
 vendor/
 node_modules/
-scripts/GAS/*
+backup/*

@@ -1,4 +1,4 @@
-<?php $path=parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); $isPortal=($path==='/portal'||$path==='/carpetas'); $isAdmin=!empty($_SESSION['is_admin']); if(!isset($client)){ $client=isset($_SESSION['client_name'])?$_SESSION['client_name']:(isset($_SESSION['user'])?$_SESSION['user']:''); } $brandName=isset($_SESSION['brand_name'])?$_SESSION['brand_name']:null; if(!$brandName && !$isAdmin && $client){ require_once dirname(__DIR__,2).'/lib/gas.php'; $finList=gas_finanzas_list($client); if($finList['ok'] && is_array($finList['resultados']) && count($finList['resultados'])>0){ $bn=trim((string)($finList['resultados'][0]['razonSocial']??'')); if($bn!==''){ $_SESSION['brand_name']=$bn; $brandName=$bn; } } } $displayName=$brandName?:$client; $u=strtolower($_SESSION['user']??''); $isQUser=(preg_match('/^q/',$u)===1); ?>
+<?php $path=parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); $isPortal=($path==='/users'||$path==='/users/portal'||$path==='/portal'||$path==='/carpetas'); $isAdmin=!empty($_SESSION['is_admin']); if(!isset($client)){ $client=isset($_SESSION['client_name'])?$_SESSION['client_name']:(isset($_SESSION['user'])?$_SESSION['user']:''); } $brandName=isset($_SESSION['brand_name'])?$_SESSION['brand_name']:null; if(!$brandName && !$isAdmin && $client){ require_once dirname(__DIR__,2).'/lib/gas.php'; $finList=gas_finanzas_list($client); if($finList['ok'] && is_array($finList['resultados']) && count($finList['resultados'])>0){ $bn=trim((string)($finList['resultados'][0]['razonSocial']??'')); if($bn!==''){ $_SESSION['brand_name']=$bn; $brandName=$bn; } } } $displayName=$brandName?:$client; $u=strtolower($_SESSION['user']??''); $isQUser=(preg_match('/^q/',$u)===1); ?>
 <header>
   <div class="topbar">
     <a href="/" class="logo-link">
@@ -14,9 +14,9 @@
       <button class="nav-close" id="navClose" aria-label="Cerrar menú"><img src="/assets/icons/x.svg" alt="" aria-hidden="true"></button>
       <div class="nav-user"><?php echo htmlspecialchars($displayName); ?></div>
       <?php if(!$isAdmin){ ?>
-        <a href="/portal" class="<?php echo $isPortal?'active':''; ?>">Portal</a>
-        <?php if($isQUser){ ?><a href="/finanzas" class="<?php echo $path==='/finanzas'?'active':''; ?>">Finanzas</a><?php } ?>
-        <?php if($isQUser){ ?><a href="/servicios" class="<?php echo $path==='/servicios'?'active':''; ?>">Servicios</a><?php } ?>
+        <a href="/users" class="<?php echo $isPortal?'active':''; ?>">Portal</a>
+        <?php if($isQUser){ ?><a href="/users/finanzas" class="<?php echo ($path==='/users/finanzas')?'active':''; ?>">Finanzas</a><?php } ?>
+        <?php if($isQUser){ ?><a href="/users/servicios" class="<?php echo ($path==='/users/servicios')?'active':''; ?>">Servicios</a><?php } ?>
         <a href="/configuracion" class="<?php echo ($path==='/configuracion'||$path==='/reportes')?'active':''; ?>">Configuración</a>
       <?php } else { ?>
         <?php if(!empty($_SESSION['is_super_admin'])){ ?>

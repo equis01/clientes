@@ -13,3 +13,10 @@ $fullTitle = isset($pageTitle) && $pageTitle!=='' ? ($pageTitle . ' Clientes | M
 <link rel="canonical" href="https://mediosconvalor.com">
 <link rel="stylesheet" href="/assets/css/app.css">
 <link rel="icon" href="https://mediosconvalor.com/wp-content/uploads/2019/03/cropped-favicon-32x32-1-32x32.png" type="image/webp">
+<script>
+(function(){
+  try{
+    fetch('/theme',{headers:{'Accept':'application/json'}}).then(function(r){return r.json();}).then(function(d){ if(d&&d.ok&&d.mode==='dark'){ document.documentElement.classList.add('theme-dark'); } else { document.documentElement.classList.remove('theme-dark'); } }).catch(function(){});
+  }catch(_){ }
+})();
+</script>

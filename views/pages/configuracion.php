@@ -40,18 +40,7 @@ if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD']==='POST'){
       } else {
         $err='Conexión fallida'.($errCurl?(' - '.$errCurl):'');
       }
-    } else {
-      ensureSchema();
-      $u=findUserByUsername($username);
-      if(!$u){ $err='Usuario no encontrado'; }
-      elseif(!password_verify($current,$u['password_hash'])){ $err='Contraseña actual incorrecta'; }
-      else {
-        $hash=password_hash($new, PASSWORD_DEFAULT);
-        $pdo=db();
-        if($GLOBALS['DB_FALLBACK'] || $pdo===null){ $err='Base de datos no disponible'; }
-        else { $stmt=$pdo->prepare('UPDATE users SET password_hash=?, updated_at=CURRENT_TIMESTAMP WHERE username=?'); $stmt->execute([$hash,$username]); $msg='Contraseña actualizada'; }
-      }
-    }
+    } else { $err='Endpoint de cambio de contraseña no configurado'; }
   }
 }
 ?>

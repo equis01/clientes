@@ -1,16 +1,12 @@
 <?php
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
-$jsonPath=dirname(__DIR__,3).'/data/admin.json';
-$store=['admins'=>[],'invites'=>[]];
-if(is_file($jsonPath)){
-  $raw=@file_get_contents($jsonPath); $j=$raw?json_decode($raw,true):null; if(is_array($j)) $store=$j;
-}
+require_once dirname(__DIR__,3).'/lib/db.php';
 $token=isset($_GET['token'])?trim($_GET['token']):'';
-$invite=null; foreach(($store['invites']??[]) as $i){ if(($i['token']??'')===$token){ $invite=$i; break; } }
+$invite=findInviteByToken($token);
 $msg=null;$err=null;$ok=false;
 function expired($iso){ $ts=strtotime($iso); return $ts!==false && time()>$ts; }
 function used($i){ return !empty($i['usedAt']); }
-if($_SERVER['REQUEST_METHOD']==='POST'){
+if($_SERVER['REQUEST_METHOD']=== 'POST'){
   $email=strtolower(trim($_POST['email']??''));
   $name=trim($_POST['name']??'');
   $pass=trim($_POST['password']??'');
@@ -20,12 +16,10 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   else if($email===''||!preg_match('/@mediosconvalor\.com$/i',$email)){ $err='Correo inválido'; }
   else if($pass===''){ $err='Contraseña requerida'; }
   else {
-    foreach(($store['admins']??[]) as $a){ if(strtolower($a['email']??'')===$email){ $err='Ya existe una cuenta'; break; } }
+    if(findAdminByEmail($email)){ $err='Ya existe una cuenta'; }
     if(!$err){
-      $store['admins'][]=[ 'email'=>$email, 'name'=>($name?:($invite['name']??'')), 'password_hash'=>password_hash($pass, PASSWORD_BCRYPT), 'createdAt'=>date('c'), 'invitedBy'=>($invite['invitedBy']??'invite'), 'photo'=>'' ];
-      // marcar usada
-      for($idx=0;$idx<count($store['invites']);$idx++){ if(($store['invites'][$idx]['token']??'')===$token){ $store['invites'][$idx]['usedAt']=date('c'); break; } }
-      @file_put_contents($jsonPath, json_encode($store, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));
+      createAdmin($email, ($name?:($invite['name']??'')), password_hash($pass,PASSWORD_BCRYPT), ($invite['invitedBy']??'invite'), '');
+      markInviteUsed($token);
       $ok=true; $msg='Cuenta creada, ya puedes iniciar sesión';
     }
   }
