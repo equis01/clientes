@@ -120,6 +120,31 @@ function hasAnyAdmins(): bool {
   return $row && intval($row['c'])>0;
 }
 
+function listAdmins(): array {
+  ensureSchema();
+  $pdo = db();
+  if ($GLOBALS['DB_FALLBACK'] || $pdo === null) { return []; }
+  $stmt = $pdo->query('SELECT email,name,created_at,invitedBy,photo FROM admins ORDER BY created_at DESC');
+  $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  return is_array($rows)?$rows:[];
+}
+
+function deleteAdmin($email): bool {
+  $pdo = db();
+  if ($GLOBALS['DB_FALLBACK'] || $pdo === null) { return false; }
+  ensureSchema();
+  $stmt = $pdo->prepare('DELETE FROM admins WHERE email = ?');
+  return $stmt->execute([$email]);
+}
+
+function updateAdmin($email,$name,$passwordHash): bool {
+  $pdo = db();
+  if ($GLOBALS['DB_FALLBACK'] || $pdo === null) { return false; }
+  ensureSchema();
+  $stmt = $pdo->prepare('UPDATE admins SET name = ?, password_hash = ? WHERE email = ?');
+  return $stmt->execute([$name,$passwordHash,$email]);
+}
+
 function migrateAdminsFromJson(): void {
   $pdo = db();
   if ($GLOBALS['DB_FALLBACK'] || $pdo === null) { return; }

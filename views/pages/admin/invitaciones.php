@@ -4,6 +4,7 @@ if(empty($_SESSION['is_admin'])){ http_response_code(403); header('Location: /er
 require_once dirname(__DIR__,3).'/lib/env.php';
 require_once dirname(__DIR__,3).'/lib/format.php';
 require_once dirname(__DIR__,3).'/lib/db.php';
+$inviteDomain=strtolower(env('INVITE_DOMAIN','mediosconvalor.com'));
 function smtp_send($host,$port,$secure,$user,$pass,$to,$subject,$body,$from){
   $timeout=25; $errno=0; $errstr='';
   if($secure==='ssl'){ $host='ssl://'.$host; }
@@ -45,10 +46,12 @@ if(!isset($_SESSION['user'])){header('Location: /login');exit;}
 $invitesStore=listInvites();
 $msg=null;$err=null;$created=null;
 if($_SERVER['REQUEST_METHOD']==='POST'){
-  $email=strtolower(trim($_POST['email']??''));
+  $emailRaw=trim($_POST['email']??'');
+  $aliasOnly=trim($_POST['alias_email']??'');
+  $email=strtolower($emailRaw!==''?$emailRaw:($aliasOnly!==''?$aliasOnly.'@'.$inviteDomain:''));
   $name=trim($_POST['name']??'');
   $days=intval($_POST['days']??7); if($days<1) $days=7; if($days>90) $days=90;
-  if($email==='' || !preg_match('/@mediosconvalor\.com$/i',$email)){ $err='Correo inválido (solo @mediosconvalor.com)'; }
+  if($email==='' || !preg_match('/@'.preg_quote($inviteDomain,'/').'$/i',$email)){ $err='Correo inválido (solo @'.$inviteDomain.')'; }
   else {
     $existsAdmin=is_array(findAdminByEmail($email));
     if($existsAdmin){ $err='Ya existe una cuenta para este correo'; }
@@ -96,9 +99,15 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     <h2 class="title">Crear invitación</h2>
     <?php if($msg){ ?><div class="alert-success"><?php echo htmlspecialchars($msg); ?><?php if($created){ ?> — <a href="#" id="copyInvLink" data-link="<?php echo htmlspecialchars($created); ?>">Copiar enlace</a><?php } ?></div><?php } ?>
     <?php if($err){ ?><div class="alert-error"><?php echo htmlspecialchars($err); ?></div><?php } ?>
-    <form method="post" class="form-grid">
+    <form method="post" class="form-grid" id="inviteForm">
       <div class="field"><label>Nombre<input class="input" type="text" name="name"></label></div>
-      <div class="field"><label>Correo<input class="input" type="email" name="email" placeholder="alguien@mediosconvalor.com" required></label></div>
+      <div class="field"><label>Alias de correo
+        <div style="display:flex;gap:6px;align-items:center">
+          <input class="input" type="text" name="alias_email" placeholder="alias" pattern="^[A-Za-z0-9._%+-]+$" required>
+          <input class="input" type="text" value="@<?php echo htmlspecialchars($inviteDomain); ?>" readonly style="max-width:220px">
+        </div>
+      </label></div>
+      <input type="hidden" name="email" value="">
       <div class="field"><label>Caducidad<select class="input" name="days"><option value="7">7 días</option><option value="14">14 días</option><option value="30">30 días</option></select></label></div>
       <div class="actions"><button type="submit" class="btn">Generar</button><a class="btn secondary" href="/admin">Volver</a></div>
     </form>
@@ -163,7 +172,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   </div>
 </main>
 <?php include dirname(__DIR__).'/../layout/footer.php'; ?>
-<script>
+  <script>
 (function(){
   function copy(text){
     try{ navigator.clipboard.writeText(text); alert('Enlace copiado'); }
@@ -172,6 +181,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   var btn=document.getElementById('copyInvLink'); if(btn){ btn.addEventListener('click',function(e){ e.preventDefault(); copy(location.origin + (btn.dataset.link||'')); }); }
   var links=document.querySelectorAll('.copy-link');
   links.forEach(function(a){ a.addEventListener('click',function(e){ e.preventDefault(); copy(location.origin + (a.dataset.link||'')); }); });
+  var form=document.getElementById('inviteForm'); if(form){ form.addEventListener('submit',function(){ var alias=form.querySelector('input[name="alias_email"]'); var hidden=form.querySelector('input[name="email"]'); if(alias&&hidden){ hidden.value=(alias.value||'')+'@<?php echo htmlspecialchars($inviteDomain); ?>'; } }); }
 })();
 </script>
 </html>

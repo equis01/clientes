@@ -60,6 +60,12 @@ switch(rtrim($uri,'/')){
   case '/login':
     $b=dirname(__DIR__); $p=$b.'/views/pages/shared/login.php'; if(is_file($p)){ require $p; } else { $p2=$b.'/views/pages/users/login.php'; if(is_file($p2)){ require $p2; } else { require $b.'/views/pages/login.php'; } }
     break;
+  case '/contratos':
+    require dirname(__DIR__).'/views/pages/public/contratos.php';
+    break;
+  case '/contratos/submit':
+    require dirname(__DIR__).'/views/pages/public/contratos_submit.php';
+    break;
   case '/users/login':
     header('Location: /login'); exit;
     break;
@@ -86,6 +92,12 @@ switch(rtrim($uri,'/')){
     break;
   case '/configuracion':
     header('Location: /users/configuracion'); exit;
+    break;
+  case '/users/configuracion':
+    $b=dirname(__DIR__); $p=$b.'/views/pages/users/configuracion.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/configuracion.php'; }
+    break;
+  case '/users/configuración':
+    $b=dirname(__DIR__); $p=$b.'/views/pages/users/configuracion.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/configuracion.php'; }
     break;
   case '/portal':
     header('Location: /users'); exit;

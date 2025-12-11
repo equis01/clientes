@@ -40,7 +40,7 @@
   $u=strtolower($_SESSION['user']??'');
   $isQUser=(preg_match('/^q/',$u)===1);
   $isAdmin=!empty($_SESSION['is_admin']);
-  $showWelcome = ($path==='/portal' || $path==='/admin' || $path==='/admin/clientes');
+  $showWelcome = ($isPortal || $path==='/admin' || $path==='/admin/clientes');
 ?>
 <?php if($showWelcome){ ?>
 <div id="welcomeModal" class="modal" style="display:none">
@@ -58,18 +58,29 @@
       <?php } else if($isQUser){ ?>
         <p>Tu portal de cliente centraliza información y reportes.</p>
         <ul>
-          <li>Carpeta integral en Drive con documentación y reportes.</li>
+          <li>Acceso rápido a tu carpeta integral en Drive con documentación y reportes.</li>
           <li>Servicios realizados y métricas del periodo.</li>
-          <li>Finanzas y facturación.</li>
+          <li>Finanzas y última facturación.</li>
           <li>Reportes: el del mes anterior está disponible desde el día 4.</li>
+          <li><b>Notas:</b>
+            <ul>
+              <li>Asegúrate de tener una Cuenta de Google asociada a tu correo para abrir Drive.</li>
+              <li>El sistema, en ocasiones puede llegar a ser un poco lento, ya que esto está conectado directamente a un documento de Excel, el cual se actualiza constantemente y cuenta con demasiada información que se procesa cada que un usuario accede a la información, para mejorar la experiencia.</li>
+            </ul>
+          </li>
         </ul>
       <?php } else { ?>
         <p>Tu portal de cliente está listo para iniciar.</p>
         <ul>
-          <li>Carpeta integral en Drive con documentación y reportes.</li>
+          <li>Acceso rápido a tu carpeta integral en Drive con documentación y reportes.</li>
           <li>Configuración de tu cuenta y contraseña.</li>
-          <li>“Finanzas” y “Servicios” se activarán pronto.</li>
-          <li>Asegúrate de tener una Cuenta de Google asociada a tu correo para abrir Drive.</li>
+          <li>“Finanzas” y “Servicios” se activarán pronto, para una mayor transparencia y control para usted.</li>
+          <li><b>Notas:</b>
+            <ul>
+              <li>Asegúrate de tener una Cuenta de Google asociada a tu correo para abrir Drive.</li>
+              <li>El sistema, en ocasiones puede llegar a ser un poco lento, ya que esto está conectado directamente a un documento de Excel, el cual se actualiza constantemente y cuenta con demasiada información que se procesa cada que un usuario accede a la información, para mejorar la experiencia.</li>
+            </ul>
+          </li>
         </ul>
       <?php } ?>
     </div>

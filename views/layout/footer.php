@@ -33,8 +33,11 @@ document.addEventListener('DOMContentLoaded',function(){
     document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeNav(); });
   }
   function applyTheme(mode){ var root=document.documentElement; if(mode==='dark'){ root.classList.add('theme-dark'); } else { root.classList.remove('theme-dark'); } }
-  var saved=localStorage.getItem('theme');
-  applyTheme(saved?saved:'light');
-  if(themeBtn){ themeBtn.addEventListener('click',function(){ var current=document.documentElement.classList.contains('theme-dark')?'dark':'light'; var next=current==='dark'?'light':'dark'; localStorage.setItem('theme',next); applyTheme(next); }); }
+  var saved=null; try{ saved=localStorage.getItem('theme'); }catch(_){}
+  var media=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)'));
+  if(saved){ applyTheme(saved); }
+  else { applyTheme(media&&media.matches?'dark':'light'); }
+  if(!saved && media && media.addEventListener){ media.addEventListener('change',function(e){ if(!localStorage.getItem('theme')){ applyTheme(e.matches?'dark':'light'); } }); }
+  if(themeBtn){ themeBtn.addEventListener('click',function(){ var current=document.documentElement.classList.contains('theme-dark')?'dark':'light'; var next=current==='dark'?'light':'dark'; try{ localStorage.setItem('theme',next); }catch(_){ } applyTheme(next); try{ fetch('/theme',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},body:'mode='+encodeURIComponent(next)}).catch(function(){}); }catch(_){ } }); }
 });
 </script>

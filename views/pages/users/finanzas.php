@@ -58,7 +58,7 @@ $serviciosFmt=(is_string($servicios)&&is_numeric(str_replace(',','.', $servicios
       <div>Volumen contratado (m3): <?php echo htmlspecialchars($volumen); ?></div>
       <div>Excesos (m3): <?php echo htmlspecialchars($excesosFmt); ?></div>
       <div>Última factura: <?php echo htmlspecialchars($folio); ?></div>
-      <div>Servicios realizados este mes: <?php echo htmlspecialchars($serviciosFmt); ?></div>
+      <div>Servicios realizados el mes anterior: <?php echo htmlspecialchars($serviciosFmt); ?></div>
     </div>
     <?php if($error){ ?>
     <div class="card" style="margin-top:12px">

@@ -2,10 +2,14 @@
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); }
 if(!isset($_SESSION['user'])){header('Location: /login');exit;}
 if(empty($_SESSION['is_admin']) || empty($_SESSION['is_super_admin'])){ http_response_code(403); header('Location: /errores?code=403&msg=Acceso restringido'); exit; }
+require_once dirname(__DIR__,3).'/lib/db.php';
 $jsonPath=dirname(__DIR__,3).'/data/admin.json';
 $store=['admins'=>[],'invites'=>[]];
-if(is_file($jsonPath)){
-  $raw=@file_get_contents($jsonPath); $j=$raw?json_decode($raw,true):null; if(is_array($j)) $store=$j;
+// Preferir BD si está disponible, con fallback a JSON
+$adminsDb=listAdmins();
+if(is_array($adminsDb) && count($adminsDb)>0){ $store['admins']=$adminsDb; }
+else if(is_file($jsonPath)){
+  $raw=@file_get_contents($jsonPath); $j=$raw?json_decode($raw,true):null; if(is_array($j) && is_array($j['admins']??null)) $store['admins']=$j['admins'];
 }
 $msg=null;$err=null;
 $supers=['rsaucedo@mediosconvalor.com','aguzman@mediosconvalor.com','sistemas@mediosconvalor.com'];
@@ -19,11 +23,12 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     if($email===''||!preg_match('/@mediosconvalor\.com$/i',$email)){ $err='Correo inválido'; }
     else if($pass===''){ $err='Contraseña requerida'; }
     else {
-      $exists=false; foreach($store['admins'] as $a){ if(strtolower($a['email']??'')===$email){ $exists=true; break; } }
+      $exists=is_array(findAdminByEmail($email));
       if($exists){ $err='Ya existe'; }
       else {
-        $entry=['email'=>$email,'name'=>$name,'password_hash'=>password_hash($pass,PASSWORD_DEFAULT)];
-        $store['admins'][]=$entry; @file_put_contents($jsonPath, json_encode($store, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE)); $msg='Admin creado';
+        $ok=createAdmin($email,$name,password_hash($pass,PASSWORD_DEFAULT),$_SESSION['user']??'');
+        if($ok){ $msg='Admin creado'; $store['admins']=listAdmins(); }
+        else { $err='Error al crear admin'; }
       }
     }
   } else if($action==='delete'){
@@ -31,8 +36,8 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     if(in_array($email,$supers,true)){ $err='No se puede eliminar un super admin'; }
     else if($email===$self){ $err='No puedes eliminar tu propia cuenta'; }
     else {
-      $store['admins']=array_values(array_filter($store['admins'],function($a) use ($email){ return strtolower($a['email']??'')!==$email; }));
-      @file_put_contents($jsonPath, json_encode($store, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE)); $msg='Admin eliminado';
+      if(deleteAdmin($email)){ $msg='Admin eliminado'; $store['admins']=listAdmins(); }
+      else { $err='Error al eliminar admin'; }
     }
   } else if($action==='edit'){
     $email=strtolower(trim($_POST['email']??''));
@@ -42,15 +47,9 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     else if($name===''){ $err='Nombre requerido'; }
     else if($pass===''){ $err='Contraseña requerida'; }
     else {
-      for($i=0;$i<count($store['admins']);$i++){
-        if(strtolower($store['admins'][$i]['email']??'')===$email){
-          $store['admins'][$i]['name']=$name;
-          $store['admins'][$i]['password_hash']=password_hash($pass,PASSWORD_DEFAULT);
-          @file_put_contents($jsonPath, json_encode($store, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));
-          $msg='Admin actualizado';
-          break;
-        }
-      }
+      $ok=updateAdmin($email,$name,password_hash($pass,PASSWORD_DEFAULT));
+      if($ok){ $msg='Admin actualizado'; $store['admins']=listAdmins(); }
+      else { $err='Error al actualizar admin'; }
     }
   }
 }

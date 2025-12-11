@@ -29,7 +29,7 @@ function gas_exec($params,$insecure=false){
   $status=null;$raw=null;$error=null;
   if(function_exists('curl_init')){
     $ch=curl_init($url);
-    $opts=[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>15,CURLOPT_HTTPHEADER=>['Accept: application/json'],CURLOPT_FOLLOWLOCATION=>true,CURLOPT_MAXREDIRS=>5];
+    $opts=[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>30,CURLOPT_HTTPHEADER=>['Accept: application/json'],CURLOPT_FOLLOWLOCATION=>true,CURLOPT_MAXREDIRS=>5];
     if($insecure){ $opts[CURLOPT_SSL_VERIFYPEER]=false; $opts[CURLOPT_SSL_VERIFYHOST]=false; }
     curl_setopt_array($ch,$opts);
     $raw=curl_exec($ch);
@@ -39,7 +39,7 @@ function gas_exec($params,$insecure=false){
     $method='curl';
     if($raw===false){ $error='Conexión fallida: '.$curlErr; }
   } else {
-    $context=stream_context_create(['http'=>['method'=>'GET','timeout'=>15,'header'=>'Accept: application/json','ignore_errors'=>true],'ssl'=>['verify_peer'=>!$insecure,'verify_peer_name'=>!$insecure]]);
+    $context=stream_context_create(['http'=>['method'=>'GET','timeout'=>30,'header'=>'Accept: application/json','ignore_errors'=>true],'ssl'=>['verify_peer'=>!$insecure,'verify_peer_name'=>!$insecure]]);
     $headers=@get_headers($url,1);
     $redir=null;
     if(is_array($headers) && isset($headers['Location'])){ $redir=is_array($headers['Location'])?end($headers['Location']):$headers['Location']; }
@@ -108,8 +108,9 @@ function gas_finanzas_list($alias,$insecure=false){
 }
 
 function gas_generate_report($alias,$mes,$anio,$driveUrl,$insecure=false,$usuario=null){
-  $mm=preg_replace('/\D/','', (string)$mes);
-  if($mm===''){ $mm=''; } else { $mm=str_pad((string)intval($mm),2,'0',STR_PAD_LEFT); }
+  $mraw=strtolower(trim((string)$mes));
+  if($mraw==='anual' || $mraw==='0' || $mraw==='00'){ $mm='anual'; }
+  else { $mm=preg_replace('/\D/','', (string)$mes); if($mm===''){ $mm=''; } else { $mm=str_pad((string)intval($mm),2,'0',STR_PAD_LEFT); } }
   $yy=preg_replace('/\D/','', (string)$anio);
   $params=['service'=>'reportes','action'=>'generateReport','alias'=>$alias];
   if($mm!==''){ $params['mes']=$mm; }
@@ -137,8 +138,9 @@ function gas_lock_report($fileId,$insecure=false){
 }
 
 function gas_find_report($alias,$mes,$anio,$driveUrl,$insecure=false){
-  $mm=preg_replace('/\D/','', (string)$mes);
-  if($mm===''){ $mm=''; } else { $mm=str_pad((string)intval($mm),2,'0',STR_PAD_LEFT); }
+  $mraw=strtolower(trim((string)$mes));
+  if($mraw==='anual' || $mraw==='0' || $mraw==='00'){ $mm='anual'; }
+  else { $mm=preg_replace('/\D/','', (string)$mes); if($mm===''){ $mm=''; } else { $mm=str_pad((string)intval($mm),2,'0',STR_PAD_LEFT); } }
   $yy=preg_replace('/\D/','', (string)$anio);
   $params=['service'=>'reportes','action'=>'findReport','alias'=>$alias];
   if($mm!==''){ $params['mes']=$mm; }

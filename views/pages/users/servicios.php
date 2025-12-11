@@ -7,28 +7,30 @@ require_once dirname(__DIR__,3).'/lib/env.php';
 require_once dirname(__DIR__,3).'/lib/gas.php';
 require_once dirname(__DIR__,3).'/lib/format.php';
 $tzTmp=env('TIMEZONE','America/Mexico_City');
-if(isset($_GET['generate_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
-  header('Content-Type: application/json; charset=utf-8');
-  $aliasSel=isset($_POST['alias_sel'])?trim($_POST['alias_sel']):'';
-  $alias=$aliasSel!==''? $aliasSel : (isset($_SESSION['brand_name']) && $_SESSION['brand_name']?$_SESSION['brand_name']:(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']));
-  $mesReq=isset($_POST['mes'])?trim($_POST['mes']):'';
-  $anioReq=isset($_POST['anio'])?trim($_POST['anio']):'';
-  $drive=isset($_SESSION['folder_url'])?$_SESSION['folder_url']:null;
-  $insecure=isset($_POST['insecure']);
-  $usuario=(isset($_SESSION['user'])?$_SESSION['user']:null);
-  $nowSrv=new DateTime('now', new DateTimeZone($tzTmp));
-  $daySrv=(int)$nowSrv->format('d');
-  $curMSrv=(int)$nowSrv->format('m');
-  $curYSrv=(int)$nowSrv->format('Y');
-  $selM=(int)preg_replace('/\D/','',$mesReq);
-  $selY=(int)preg_replace('/\D/','',$anioReq);
-  $prevM=$curMSrv===1?12:($curMSrv-1);
-  $prevY=$curMSrv===1?($curYSrv-1):$curYSrv;
-  if($selM===$prevM && $selY===$prevY && $daySrv<=3){ echo json_encode(['ok'=>false,'error'=>'Disponible a partir del día 4 del mes actual']); exit; }
-  $gen=gas_generate_report($alias,$mesReq,$anioReq,$drive,$insecure,$usuario);
-  echo json_encode($gen);
-  exit;
-}
+  if(isset($_GET['generate_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
+    header('Content-Type: application/json; charset=utf-8');
+    $aliasSel=isset($_POST['alias_sel'])?trim($_POST['alias_sel']):'';
+    $alias=$aliasSel!==''? $aliasSel : (isset($_SESSION['brand_name']) && $_SESSION['brand_name']?$_SESSION['brand_name']:(isset($_SESSION['client_name'])?$_SESSION['client_name']:$_SESSION['user']));
+    $mesReq=isset($_POST['mes'])?trim($_POST['mes']):'';
+    $anioReq=isset($_POST['anio'])?trim($_POST['anio']):'';
+    $drive=isset($_SESSION['folder_url'])?$_SESSION['folder_url']:null;
+    $insecure=isset($_POST['insecure']);
+    $usuario=(isset($_SESSION['user'])?$_SESSION['user']:null);
+    $nowSrv=new DateTime('now', new DateTimeZone($tzTmp));
+    $daySrv=(int)$nowSrv->format('d');
+    $curMSrv=(int)$nowSrv->format('m');
+    $curYSrv=(int)$nowSrv->format('Y');
+    $isAnnual=(strtolower($mesReq)==='anual');
+    $selM=(int)preg_replace('/\D/','',$isAnnual?'':$mesReq);
+    $selY=(int)preg_replace('/\D/','',$anioReq);
+    if(!$isAnnual && $selM===$curMSrv && $selY===$curYSrv){ echo json_encode(['ok'=>false,'error'=>'El reporte del mes en curso se habilita al finalizar el mes']); exit; }
+    $prevM=$curMSrv===1?12:($curMSrv-1);
+    $prevY=$curMSrv===1?($curYSrv-1):$curYSrv;
+    if(!$isAnnual && $selM===$prevM && $selY===$prevY && $daySrv<=3){ echo json_encode(['ok'=>false,'error'=>'Disponible a partir del día 4 del mes actual']); exit; }
+    $gen=gas_generate_report($alias,$mesReq,$anioReq,$drive,$insecure,$usuario);
+    echo json_encode($gen);
+    exit;
+  }
 $tz=$tzTmp;
 if(isset($_GET['lock_report']) && $_SERVER['REQUEST_METHOD']==='POST'){
   header('Content-Type: application/json; charset=utf-8');
@@ -60,14 +62,14 @@ $aliasList=array_keys($aliases);
 if(count($aliasList)>0){ if($aliasSel===''){ $aliasSel=$aliasList[0]; } elseif(!in_array($aliasSel,$aliasList,true)){ $aliasSel=$aliasList[0]; } }
 $mes=isset($_GET['mes'])?trim($_GET['mes']):'';
 $anio=isset($_GET['anio'])?trim($_GET['anio']):'';
-$todoAnio=isset($_GET['todo_anio']) && ($_GET['todo_anio']==='1' || strtolower($_GET['todo_anio'])==='true');
+$todoAnio=(isset($_GET['mes']) && strtolower(trim($_GET['mes']))==='anual');
 $now=new DateTime('now', new DateTimeZone($tz));
 $currentYear=$now->format('Y');
 if($anio===''){$anio=$currentYear;} else {$anio=$currentYear;}
 if(!$todoAnio && $mes===''){
   $day=(int)$now->format('d');
   $m=(int)$now->format('m');
-  if($day<=7 && $m>1){ $mes=str_pad((string)($m-1),2,'0',STR_PAD_LEFT); }
+  if($day<=4 && $m>1){ $mes=str_pad((string)($m-1),2,'0',STR_PAD_LEFT); }
   else { $mes=$now->format('m'); }
 }
 $servicios='-';
@@ -104,19 +106,14 @@ $gasReal=$res['url'];
         <?php $meses=[1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre']; ?>
         <div class="field">
           <label for="mes">Mes</label>
-          <select id="mes" name="mes"<?php echo $todoAnio?' disabled':''; ?> data-default="<?php echo (int)$mes; ?>">
-            <option value=""<?php echo $todoAnio?' selected':''; ?>>—</option>
+          <select id="mes" name="mes">
+            <option value="anual"<?php echo ($mes==='anual')?' selected':''; ?>>Todo el año</option>
             <?php foreach($meses as $mN=>$mNomb){ $sel=((int)$mes)===$mN? ' selected': ''; ?>
               <option value="<?php echo $mN; ?>"<?php echo $sel; ?>><?php echo htmlspecialchars($mNomb); ?></option>
             <?php } ?>
           </select>
         </div>
-        <div class="field">
-          <label for="anio">Año</label>
-          <select id="anio" name="anio">
-            <option value="<?php echo htmlspecialchars($currentYear); ?>" selected><?php echo htmlspecialchars($currentYear); ?></option>
-          </select>
-        </div>
+        <input type="hidden" id="anio" name="anio" value="<?php echo htmlspecialchars($currentYear); ?>">
         <?php if(count($aliases)>1){ ?>
         <div class="field">
           <label for="alias_sel">Alias</label>
@@ -127,9 +124,6 @@ $gasReal=$res['url'];
           </select>
         </div>
         <?php } ?>
-        <label class="field" style="margin-left:8px">
-          <input type="checkbox" name="todo_anio" value="1"<?php echo $todoAnio?' checked':''; ?>> Todo el año
-        </label>
         <button type="submit" class="btn">Filtrar</button>
         <button type="button" class="btn secondary" id="btnGenerarReporte">Generar reporte</button>
       </form>
@@ -183,15 +177,8 @@ $gasReal=$res['url'];
   (function(){
     var form=document.querySelector('form.filter');
     if(form){ form.addEventListener('submit',function(){ try{ window.showLoader('Cargando…'); }catch(_){} }); }
-    var chk=document.querySelector('input[name="todo_anio"]');
-    var sel=document.getElementById('mes');
-    if(!chk||!sel) return;
-    function sync(){
-      if(chk.checked){ sel.disabled=true; sel.value=''; }
-      else { sel.disabled=false; if(!sel.value){ sel.value=String(sel.dataset.default||''); } }
-    }
-    chk.addEventListener('change',sync);
-    sync();
+    var sel=document.getElementById('mes'); if(!sel) return;
+    // sin casilla; siempre habilitado
   })();
   </script>
   <script>
@@ -210,16 +197,17 @@ $gasReal=$res['url'];
     gen.addEventListener('click',function(){
       var mSel=document.getElementById('mes');
       var aSel=document.getElementById('anio');
-      var m=(mSel&&mSel.value)|| (mSel&&mSel.dataset.default)|| '';
+      var m=(mSel&&mSel.value)|| '';
       var y=aSel?aSel.value:'';
       if(!m||!y){ alert('Selecciona mes y año'); return; }
       try{
         var now=new Date();
         var d=now.getDate();
         var cm=now.getMonth()+1; var cy=now.getFullYear();
+        if(m!=='anual' && parseInt(m,10)===cm && parseInt(y,10)===cy){ alert('El reporte del mes en curso se habilita al finalizar el mes'); return; }
         var pm=cm===1?12:(cm-1); var py=cm===1?(cy-1):cy;
-        if(parseInt(m,10)===pm && parseInt(y,10)===py && d<=3){ alert('Disponible a partir del día 4 del mes actual'); return; }
-      }catch(_){}
+        if(m!=='anual' && parseInt(m,10)===pm && parseInt(y,10)===py && d<=3){ alert('Disponible a partir del día 4 del mes actual'); return; }
+      }catch(_){ }
       gen.disabled=true; gen.textContent='Generando...';
       if(modal){ modal.style.display='flex'; }
       loader.classList.remove('hidden');
@@ -266,7 +254,7 @@ $gasReal=$res['url'];
                 } else {
                   var bodyFind2='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal);
                   startDotsOn(status,'Generando');
-                  fetch('/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind2})
+                  fetch('/users/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind2})
                     .then(function(r3){ return r3.json(); })
                     .then(function(ff){
                       gen.disabled=false; gen.textContent='Generar reporte';
@@ -287,19 +275,19 @@ $gasReal=$res['url'];
                         status.classList.add('err'); status.textContent='Error: '+(ff&&ff.error||'Fallo');
                       }
                     })
-                    .catch(function(){ gen.disabled=false; gen.textContent='Generar reporte'; if(dotsTimer1) clearInterval(dotsTimer1); loader.classList.add('hidden'); if(downloadRow){ downloadRow.style.display='none'; } status.classList.add('err'); status.textContent='Error: Conexión fallida'; });
+                    .catch(function(){ gen.disabled=false; gen.textContent='Generar reporte'; if(dotsTimer1) clearInterval(dotsTimer1); loader.classList.add('hidden'); if(downloadRow){ downloadRow.style.display='none'; } status.classList.remove('err'); status.textContent='Verificando en Drive...'; setTimeout(function(){ var bodyFind4='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal); fetch('/users/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind4}).then(function(r){return r.json();}).then(function(ff3){ if(ff3&&ff3.ok){ status.classList.add('ok'); status.textContent='Reporte adjunto a su carpeta de Drive'; fileId=ff3.fileId||null; var url4=ff3.downloadUrl || (ff3.fileId?('https://drive.google.com/uc?export=download&id='+ff3.fileId):null); if(downloadRow){ downloadRow.style.display='flex'; } if(downloadLoader){ downloadLoader.classList.remove('hidden'); } if(downloadStatus){ downloadStatus.classList.remove('ok'); downloadStatus.classList.remove('err'); startDotsOn(downloadStatus,'Descargando'); } if(downloadLink && url4){ downloadLink.href=url4; } if(url4){ try{ window.open(url4,'_blank'); }catch(_){ } } } else { status.classList.add('err'); status.textContent='Error: Conexión fallida'; } }).catch(function(){ status.classList.add('err'); status.textContent='Error: Conexión fallida'; }); }, 4000); });
                 }
               })
-              .catch(function(){ gen.disabled=false; gen.textContent='Generar reporte'; if(dotsTimer1) clearInterval(dotsTimer1); loader.classList.add('hidden'); if(downloadRow){ downloadRow.style.display='none'; } status.classList.add('err'); status.textContent='Error: Conexión fallida'; });
+              .catch(function(){ gen.disabled=false; gen.textContent='Generar reporte'; if(dotsTimer1) clearInterval(dotsTimer1); loader.classList.add('hidden'); if(downloadRow){ downloadRow.style.display='none'; } status.classList.remove('err'); status.textContent='Verificando en Drive...'; setTimeout(function(){ var bodyFind3='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal); fetch('/users/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind3}).then(function(r){return r.json();}).then(function(ff2){ if(ff2&&ff2.ok){ status.classList.add('ok'); status.textContent='Reporte adjunto a su carpeta de Drive'; fileId=ff2.fileId||null; var url3=ff2.downloadUrl || (ff2.fileId?('https://drive.google.com/uc?export=download&id='+ff2.fileId):null); if(downloadRow){ downloadRow.style.display='flex'; } if(downloadLoader){ downloadLoader.classList.remove('hidden'); } if(downloadStatus){ downloadStatus.classList.remove('ok'); downloadStatus.classList.remove('err'); startDotsOn(downloadStatus,'Descargando'); } if(downloadLink && url3){ downloadLink.href=url3; } if(url3){ try{ window.open(url3,'_blank'); }catch(_){ } } } else { status.classList.add('err'); status.textContent='Error: Conexión fallida'; } }).catch(function(){ status.classList.add('err'); status.textContent='Error: Conexión fallida'; }); }, 4000); });
           }
         })
-        .catch(function(){ gen.disabled=false; gen.textContent='Generar reporte'; if(dotsTimer1) clearInterval(dotsTimer1); loader.classList.add('hidden'); if(downloadRow){ downloadRow.style.display='none'; } status.classList.add('err'); status.textContent='Error: Conexión fallida'; });
+        .catch(function(){ gen.disabled=false; gen.textContent='Generar reporte'; if(dotsTimer1) clearInterval(dotsTimer1); loader.classList.add('hidden'); if(downloadRow){ downloadRow.style.display='none'; } status.classList.remove('err'); status.textContent='Verificando en Drive...'; setTimeout(function(){ var bodyFind5='mes='+encodeURIComponent(m)+'&anio='+encodeURIComponent(y)+'&alias_sel='+encodeURIComponent(aVal); fetch('/users/servicios?find_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyFind5}).then(function(r){return r.json();}).then(function(ff4){ if(ff4&&ff4.ok){ status.classList.add('ok'); status.textContent='Reporte adjunto a su carpeta de Drive'; fileId=ff4.fileId||null; var url5=ff4.downloadUrl || (ff4.fileId?('https://drive.google.com/uc?export=download&id='+ff4.fileId):null); if(downloadRow){ downloadRow.style.display='flex'; } if(downloadLoader){ downloadLoader.classList.remove('hidden'); } if(downloadStatus){ downloadStatus.classList.remove('ok'); downloadStatus.classList.remove('err'); startDotsOn(downloadStatus,'Descargando'); } if(downloadLink && url5){ downloadLink.href=url5; } if(url5){ try{ window.open(url5,'_blank'); }catch(_){ } } } else { status.classList.add('err'); status.textContent='Error: Conexión fallida'; } }).catch(function(){ status.classList.add('err'); status.textContent='Error: Conexión fallida'; }); }, 4000); });
     });
     if(btnClose){ btnClose.addEventListener('click',function(){
       if(modal){ modal.style.display='none'; }
       if(dotsTimer1) clearInterval(dotsTimer1);
       if(dotsTimer2) clearInterval(dotsTimer2);
-      if(fileId){ var b='fileId='+encodeURIComponent(fileId); fetch('/servicios?lock_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b}).catch(function(){}); }
+      if(fileId){ var b='fileId='+encodeURIComponent(fileId); fetch('/users/servicios?lock_report=1',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b}).catch(function(){}); }
     }); }
   })();
   </script>

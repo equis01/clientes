@@ -76,6 +76,69 @@ function generateReportDoc(params){
     if (!aliasRaw || !mesParam || !anioStr) {
       return { ok:false, error:'Faltan parámetros (alias, mes, anio)', step:step };
     }
+    var isAnnual = (String(mesParam).toLowerCase()==='anual' || mesParam==='00' || mesParam==='0');
+    if (isAnnual) {
+      var anio = parseInt(anioStr,10);
+      if (!(anio >= 2000 && anio <= 2100)) { return { ok:false, error:'Año inválido', step:step }; }
+      var aliasNorm = normalize(aliasRaw);
+      var todayStr  = Utilities.formatDate(new Date(), TIMEZONE, 'dd/MM/yyyy');
+      step = 'getMetricsYear';
+      var metricsY = getMetricsForYear(aliasRaw, anio);
+      if (!metricsY.ok) { return { ok:false, error:(metricsY.error||'Error al obtener métricas'), step:step }; }
+      var rows   = metricsY.rows;
+      var totals = metricsY.totals;
+      step = 'getRazonSocial';
+      var razonSocial = getRazonSocialFromPlantilla(aliasNorm) || aliasRaw;
+      step = 'resolveRootFolder';
+      var rootFolder = resolveRootFolder(driveUrlParam, aliasNorm);
+      step = 'ensureFolders';
+      var safeAlias          = sanitizeForFilename(aliasRaw);
+      var reportesFolderName = 'Reportes ' + safeAlias;
+      var yearFolderName     = String(anio);
+      var reportesFolder = ensureChildFolder(rootFolder, reportesFolderName);
+      var yearFolder     = ensureChildFolder(reportesFolder, yearFolderName);
+      step = 'fillTemplateAnnual';
+      var baseName = 'ANUAL.REPORTE DE RESIDUOS_' + safeAlias + '_' + anio;
+      var templateFile = DriveApp.getFileById(TEMPLATE_DOC_ID);
+      var copyName     = 'TMP_' + baseName;
+      var copyFile     = templateFile.makeCopy(copyName, yearFolder);
+      var copyId       = copyFile.getId();
+      var doc  = DocumentApp.openById(copyId);
+      var body = doc.getBody();
+      body.replaceText('{{MES_MAYUS}}',        'ANUAL');
+      body.replaceText('{{NOMBRE_COMERCIAL}}', aliasRaw);
+      body.replaceText('{{NOMBRE_FISCAL}}',    razonSocial);
+      body.replaceText('{{RFC}}',              '');
+      body.replaceText('{{FECHA_REPORTE}}',    todayStr);
+      body.replaceText('{{TOTAL_M3}}',      totals.volumen.toFixed(1));
+      body.replaceText('{{TOTAL_KG}}',      totals.kg.toFixed(1));
+      body.replaceText('{{TOTAL_EXCESOS}}', totals.exceso.toFixed(1));
+      var tableRows = [];
+      tableRows.push(['FECHA','TIPO DE RESIDUO','VOLUMEN (m³)','PESO (kg)','EXCESOS (m³)']);
+      rows.forEach(function(r){
+        var fechaStr=''; if(r.fecha instanceof Date){ fechaStr=Utilities.formatDate(r.fecha,TIMEZONE,'dd/MM/yyyy'); } else if(r.fechaStr){ var d=parseAnyDate(r.fechaStr); fechaStr=d?Utilities.formatDate(d,TIMEZONE,'dd/MM/yyyy'):String(r.fechaStr); }
+        tableRows.push([fechaStr, r.tipo||'', r.volumen||0, r.kg||0, r.exceso||0]);
+      });
+      var marker='{{TABLA_SERVICIOS}}'; var rangeElement=body.findText(marker); if(rangeElement){ var el=rangeElement.getElement(); el.asText().setText(''); body.appendTable(tableRows); } else { body.appendTable(tableRows); }
+      var tables=body.getTables(); if(tables.length>0){ var table=tables[tables.length-1]; var headerRow=table.getRow(0); for(var c=0;c<headerRow.getNumCells();c++){ headerRow.getCell(c).editAsText().setBold(true); } }
+      doc.saveAndClose();
+      step = 'exportPdfAnnual';
+      var pdfName = baseName + '.pdf';
+      // Eliminar anteriores con el mismo nombre
+      var it = yearFolder.getFilesByName(pdfName); while(it.hasNext()){ it.next().setTrashed(true); }
+      var pdfBlob = exportDocToPdfBlob(copyId, pdfName);
+      step = 'savePdfAnnual';
+      var pdfFile = yearFolder.createFile(pdfBlob);
+      pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      if (!KEEP_DOC_COPY) { copyFile.setTrashed(true); }
+      var fileId      = pdfFile.getId();
+      var downloadUrl = 'https://drive.google.com/uc?export=download&id=' + fileId;
+      var viewUrl     = pdfFile.getUrl();
+      var folderPath  = reportesFolderName + '/' + yearFolderName;
+      step = 'logReportAnnual';
+      logReportGeneration(usuarioRaw, aliasRaw, 0, anio, fileId, pdfFile.getName(), folderPath);
+      return { ok:true, fileId:fileId, fileName:pdfFile.getName(), downloadUrl:downloadUrl, viewUrl:viewUrl, folderPath:folderPath };
+    }
 
     var mesNum = parseMesNumero(mesParam);     // 1-12
     if (!(mesNum >= 1 && mesNum <= 12)) {
@@ -271,6 +334,34 @@ function findReport(params) {
       return { ok:false, error:'Faltan parámetros (alias, mes, anio)', step:step };
     }
 
+    var isAnnual = (String(mesParam).toLowerCase()==='anual' || mesParam==='00' || mesParam==='0');
+    if (isAnnual) {
+      var anio = parseInt(anioStr,10);
+      if (!(anio >= 2000 && anio <= 2100)) { return { ok:false, error:'Año inválido', step:step }; }
+      var aliasNorm = normalize(aliasRaw);
+      var safeAlias = sanitizeForFilename(aliasRaw);
+      step = 'checkLogAnnual';
+      var logEntry = lookupReportInLog(aliasRaw, 0, anio);
+      if (logEntry && logEntry.fileId){ try{ var fLog=DriveApp.getFileById(logEntry.fileId); var dl='https://drive.google.com/uc?export=download&id='+logEntry.fileId; return { ok:true, fileId:logEntry.fileId, fileName:logEntry.fileName||fLog.getName(), downloadUrl:dl, viewUrl:fLog.getUrl(), folderPath:logEntry.folderPath||'' }; }catch(e){}
+      }
+      step = 'resolveRootFolderAnnual';
+      var rootFolder = resolveRootFolder(driveUrlParam, aliasNorm);
+      step = 'locateFoldersAnnual';
+      var reportesFolderName = 'Reportes ' + safeAlias;
+      var yearFolderName     = String(anio);
+      var reportesFolder = getExistingChildFolder(rootFolder, reportesFolderName);
+      if (!reportesFolder) { return { ok:false, error:'Carpeta de reportes no encontrada', step:step }; }
+      var yearFolder = getExistingChildFolder(reportesFolder, yearFolderName);
+      if (!yearFolder) { return { ok:false, error:'Carpeta del año no encontrada', step:step }; }
+      step = 'findFileAnnual';
+      var baseName='ANUAL.REPORTE DE RESIDUOS_' + safeAlias + '_' + anio;
+      var basePdf=baseName + '.pdf';
+      var files=yearFolder.getFiles(); var chosenFile=null;
+      while(files.hasNext()){ var f=files.next(); var name=f.getName(); if(name===basePdf || name.indexOf(baseName + '_(')===0){ if(!chosenFile){ chosenFile=f; } else { if(f.getLastUpdated()>chosenFile.getLastUpdated()){ chosenFile=f; } } } }
+      if(!chosenFile){ return { ok:false, error:'Reporte no encontrado en Drive', step:step }; }
+      var fileId=chosenFile.getId(); var downloadUrl='https://drive.google.com/uc?export=download&id='+fileId; var viewUrl=chosenFile.getUrl(); var folderPath=reportesFolderName + '/' + yearFolderName;
+      return { ok:true, fileId:fileId, fileName:chosenFile.getName(), downloadUrl:downloadUrl, viewUrl:viewUrl, folderPath:folderPath };
+    }
     var mesNum = parseMesNumero(mesParam);
     if (!(mesNum >= 1 && mesNum <= 12)) {
       return { ok:false, error:'Mes inválido', step:step };
@@ -416,7 +507,7 @@ function getMetricsForReport(aliasRaw, mesNum, anio){
     var rows   = [];
     var totVol = 0, totKg = 0, totExc = 0;
 
-    for (var j = 0; j < datos.length; j++){
+  for (var j = 0; j < datos.length; j++){
       var row = datos[j];
 
       var cliente = IDX.CLIENTES > -1 ? row[IDX.CLIENTES] : '';
@@ -844,4 +935,25 @@ function lookupReportInLog(aliasRaw, mesNum, anio){
   } catch (e) {
     return null;
   }
+}
+
+function getMetricsForYear(aliasRaw, anio){
+  try {
+    var hoja = sheetOperaciones();
+    if (!hoja) return { ok:false, error:'Hoja de operaciones no encontrada' };
+    var lastRow = hoja.getLastRow(); var lastCol = hoja.getLastColumn();
+    if (lastRow <= 1) { return { ok:true, rows:[], totals:{volumen:0,kg:0,exceso:0} }; }
+    var info = detectarEncabezadosOperaciones(hoja); var headerRow = info.headerRow; var headers = info.headers; var IDX = info.indices;
+    if (IDX.CLIENTES === -1 && IDX.RAZON === -1) { return { ok:false, error:'Faltan columnas requeridas en BD RELLENO', headerRow: headerRow, headers: headers, indices: IDX }; }
+    var dataStartRow = headerRow + 1; if (lastRow <= headerRow) { return { ok:true, rows:[], totals:{volumen:0,kg:0,exceso:0} }; }
+    var datos = hoja.getRange(dataStartRow, 1, lastRow - headerRow, lastCol).getValues();
+    var aliasNorm = normalize(aliasRaw); var rows=[]; var totVol=0, totKg=0, totExc=0;
+    for (var j=0; j<datos.length; j++){
+      var row=datos[j]; var cliente=IDX.CLIENTES>-1?row[IDX.CLIENTES]:''; var razon=IDX.RAZON>-1?row[IDX.RAZON]:''; if(!coincideConAliasOper(aliasNorm,cliente,razon)) continue;
+      var fechaVal = IDX.C>-1?row[IDX.C]:''; var d=parseAnyDate(fechaVal); if(!d) continue; if(d.getFullYear()!==anio) continue;
+      var tipo=IDX.F>-1?row[IDX.F]:''; var vol=(IDX.Q>-1)?toNumber(row[IDX.Q]):0; var kg=(IDX.S>-1)?toNumber(row[IDX.S]):0; var exc=(IDX.T>-1)?toNumber(row[IDX.T]):0;
+      rows.push({ fecha:d, fechaStr:fechaVal, tipo:safe(tipo), volumen:vol, kg:kg, exceso:exc }); totVol+=vol; totKg+=kg; totExc+=exc;
+    }
+    return { ok:true, rows:rows, totals:{ volumen:totVol, kg:totKg, exceso:totExc } };
+  } catch(err){ return { ok:false, error:String(err) }; }
 }
