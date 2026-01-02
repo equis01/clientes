@@ -1,43 +1,264 @@
 @import url('https://rsms.me/inter/inter-ui.css');
-::selection{background:#2D2F36}
-::-webkit-selection{background:#2D2F36}
-::-moz-selection{background:#2D2F36}
-body{background-color:rgba(0,0,0,.6);background-size:cover;background-image:url("https://mediosconvalor.github.io/mcv/img/background/clientes.jpg");background-repeat:no-repeat;font-family:'Inter UI',sans-serif;margin:0;padding:0}
-body:before{content:'';position:fixed;top:0;bottom:0;left:0;right:0;background-color:rgba(52,57,71,.9)}
-.page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;position:relative;width:100%}
-@media (max-width:767px){.page{padding:12px}}
-.container{display:flex;margin:0 auto;width:100%;max-width:640px;background:transparent}
-@media (max-width:767px){.container{flex-direction:column;width:100%}}
-.left{background:#fff;position:relative;width:50%;padding:24px}
-@media (max-width:767px){.left{width:100%;padding:16px}}
-.login{margin:0;display:flex;align-items:center;justify-content:center}
-.login img{max-width:100%;height:auto}
-.right{background:#474A59;box-shadow:0 0 40px 16px rgba(0,0,0,.22);color:#F1F1F2;position:relative;width:50%;padding:24px}
-@media (max-width:767px){.right{width:100%;padding:16px}}
-svg{position:absolute;width:100%;max-width:320px}
-path{fill:none;stroke:url(#linearGradient);stroke-width:4;stroke-dasharray:240 1386}
-.form{margin:0;position:relative}
-label{color:#c2c2c5;display:block;font-size:14px;height:16px;margin-top:20px;margin-bottom:5px}
-input{background:transparent;background-color:#343947;border:0;border-radius:10px;color:#fff;font-size:20px;height:30px;line-height:30px;outline:none!important;width:100%}
-input::-moz-focus-inner{border:0}
-#submit{padding:10px 20px;background-color:#00DC2A;color:#343947;border:2px solid #fff;border-radius:30px;height:50px;cursor:pointer;margin-top:24px;transition:color 300ms}
-#submit:hover{background-color:#fff}
-@media (max-width:767px){svg{display:none}}
-
-.forgot-password{margin-top:24px;font-size:14px}
-.forgot-password a{color:#00DC2A;text-decoration:none}
-/* modal */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50}
-.modal-content{background:#fff;color:#0b1222;border-radius:12px;max-width:520px;width:90%;padding:16px;border:1px solid #e2e8f0}
-.modal-title{font-weight:700;margin-bottom:8px}
-.modal-body{margin-bottom:12px;line-height:1.4}
-
-@media (min-width:768px){
-  .container{max-width:720px}
-  .left{padding:0;min-height:380px;display:flex;align-items:center;justify-content:center}
-  .login{margin:0}
-  .right{padding:0;min-height:380px}
-  .form{margin:40px;position:absolute}
-  svg{display:block;position:absolute;width:320px;top:0}
+::selection{background:#00DC2A;color:#fff}
+body{
+  background-color:rgba(0,0,0,.6);
+  background-size:cover;
+  background-image:url("https://mediosconvalor.github.io/mcv/img/background/clientes.jpg");
+  background-repeat:no-repeat;
+  font-family:'Inter UI',sans-serif;
+  margin:0;padding:0;
+  min-height: 100vh;
 }
-#submit:hover{background-color:#fff}
+body:before{content:'';position:fixed;top:0;bottom:0;left:0;right:0;background-color:rgba(31, 35, 43, 0.85); backdrop-filter: blur(4px);}
+
+.page{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+}
+
+/* Card Principal */
+.login-card {
+    display: flex;
+    width: 100%;
+    max-width: 860px;
+    height: 480px; /* Fixed height for desktop */
+    background: #FFFFFF; /* White background */
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+}
+
+/* Columna Izquierda (Logo) */
+.card-left {
+    width: 45%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F9FAFB; /* Very light gray */
+    position: relative;
+    padding: 20px;
+    box-sizing: border-box;
+    border-right: 1px solid #E5E7EB;
+}
+.card-left::after { display: none; }
+
+.logo-mcv {
+    max-width: 80%;
+    height: auto;
+}
+
+/* Columna Derecha (Formulario) */
+.card-right {
+    width: 55%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #FFFFFF;
+    color: #1F2937; /* Dark text */
+    box-sizing: border-box;
+    position: relative;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+}
+
+/* Inputs */
+.input-group {
+    margin-bottom: 15px;
+}
+.input-group label {
+    display: block;
+    color: #4B5563; /* Darker label */
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-icon {
+    position: absolute;
+    left: 14px;
+    width: 20px;
+    height: 20px;
+    color: #9CA3AF;
+}
+.input-wrapper input {
+    width: 100%;
+    background: #F3F4F6; /* Light input bg */
+    border: 1px solid #E5E7EB; /* Light border */
+    border-radius: 8px;
+    padding: 12px 12px 12px 44px; /* Space for icon */
+    color: #1F2937; /* Dark text */
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+.input-wrapper input:focus {
+    background: #FFFFFF;
+    border-color: #00DC2A;
+    box-shadow: 0 0 0 2px rgba(0, 220, 42, 0.2);
+}
+.input-wrapper input::placeholder {
+    color: #9CA3AF;
+}
+
+/* Botones */
+#submit {
+    width: 100%;
+    padding: 14px;
+    background-color: #00DC2A;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 50px; /* Pill shape */
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.1s;
+    margin-top: 5px;
+}
+#submit:hover {
+    background-color: #00b322;
+}
+#submit:active {
+    transform: scale(0.98);
+}
+
+.separator {
+    text-align: center;
+    margin: 14px 0;
+    color: #9CA3AF;
+    font-size: 12px;
+}
+
+.btn-mcv-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px;
+    background-color: transparent;
+    color: #374151; /* Darker text */
+    border: 1px solid #D1D5DB;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+.btn-mcv-login:hover {
+    background-color: #F9FAFB;
+    border-color: #9CA3AF;
+}
+.btn-mcv-login img {
+    height: 16px;
+    margin-right: 8px;
+    filter: none; /* Original colors */
+}
+
+/* Links & Footer */
+.forgot-password {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+}
+.forgot-password a {
+    color: #6B7280;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.forgot-password a:hover {
+    color: #00DC2A;
+}
+
+.card-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-top: 1px solid #E5E7EB;
+    padding: 15px 40px;
+    font-size: 11px;
+    color: #6B7280;
+    box-sizing: border-box;
+}
+.footer-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.footer-item svg {
+    margin-right: 6px;
+    color: #9CA3AF;
+}
+
+/* Mensajes de error/éxito */
+.messages {
+    min-height: 0;
+    margin-bottom: 5px;
+}
+.success-message, .error-message {
+    font-size: 13px;
+    text-align: center;
+}
+.success-message { color: #00DC2A; }
+.error-message { color: #ef4444; }
+
+/* Responsive Mobile */
+@media (max-width: 768px) {
+    .page {
+        align-items: center; /* Center vertically on mobile too, or flex-start if content is tall */
+    }
+    .login-card {
+        flex-direction: column;
+        height: auto; /* Fluid height */
+        max-width: 400px;
+    }
+    .card-left {
+        width: 100%;
+        padding: 30px 20px 10px;
+        background: #FFFFFF;
+        justify-content: center;
+        height: auto;
+        min-height: auto;
+        border-right: none;
+        border-bottom: 1px solid #F3F4F6;
+    }
+    .card-left::after { display: none; }
+    .logo-mcv {
+        max-width: 180px;
+    }
+    .card-right {
+        width: 100%;
+        padding: 20px 30px 40px;
+    }
+    .form-container {
+        max-width: 100%;
+    }
+}
+
+/* Modals */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal-content{background:#2A2F38;color:#fff;border-radius:12px;max-width:520px;width:90%;padding:24px;border:1px solid #4B5563; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);}
+.modal-title{font-weight:700;margin-bottom:12px; font-size: 18px;}
+.modal-body{margin-bottom:20px;line-height:1.5; color: #D1D5DB;}
+.btn{background: #00DC2A; border:none; color:white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;}
+.btn:hover{background: #00b322;}

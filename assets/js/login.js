@@ -17,7 +17,15 @@ document.addEventListener('DOMContentLoaded',function(){
     var password=document.getElementById('password').value.trim();
     var body=new URLSearchParams({username:username,password:password});
     fetch('/auth',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
-    .then(function(r){return r.json();})
+    .then(function(r){
+      return r.text().then(function(text){
+        try {
+          return JSON.parse(text);
+        } catch(e) {
+          throw new Error('Respuesta inválida del servidor: ' + text.substring(0, 50) + '...');
+        }
+      });
+    })
     .then(function(data){
       if(data&&data.ok){
         var uname=document.getElementById('username').value.trim();
@@ -42,11 +50,11 @@ document.addEventListener('DOMContentLoaded',function(){
               submitBtn.value='INGRESAR'; submitBtn.disabled=false;
             }
           })
-          .catch(function(){ showModal('Error de conexión'); submitBtn.value='INGRESAR'; submitBtn.disabled=false; });
+          .catch(function(e2){ showModal('Error de conexión (Admin): ' + e2.message); submitBtn.value='INGRESAR'; submitBtn.disabled=false; });
       }
     })
-    .catch(function(){
-      showModal('Error de conexión');
+    .catch(function(err){
+      showModal('Error: ' + err.message);
       submitBtn.value='INGRESAR';
       submitBtn.disabled=false;
     });

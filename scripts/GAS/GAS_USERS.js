@@ -1,5 +1,4 @@
-// Esto es para usuarios que inician con Q
-// https://script.google.com/macros/s/AKfycbwoGu1nai1P4BL2jNq6SdOm6qzJ9qZ6Uw08Oh6udZg1BWadu8MElLl6HR_2vgxOtSIS/exec
+// enlace del gas: https://script.google.com/macros/s/AKfycbwoGu1nai1P4BL2jNq6SdOm6qzJ9qZ6Uw08Oh6udZg1BWadu8MElLl6HR_2vgxOtSIS/exec
 
 const SPREADSHEET_ID = '1b6AjVbrzR-rVXRewe1bss-QDdCmd74JOf36uQZdjJOY';
 // nombre de la pestaña donde está la tabla de usuarios
@@ -181,58 +180,4 @@ function json(o){
   return ContentService
     .createTextOutput(JSON.stringify(o))
     .setMimeType(ContentService.MimeType.JSON);
-}
-
-
-
-
-// Esto es para usuarios que no inician con Q
-// https://script.google.com/macros/s/AKfycbxOlTBr5B57ehzwa0c3Ju2j98LnOv8XjXuo-HX5imTl3QSZzHSMhzqPUDm6duQGHF8/exec
-function doPost(e) { 
-  var username = e.parameter.username;
-  var password = e.parameter.password;
-  
-  var result = verificarCredenciales(username, password);
-  return ContentService.createTextOutput(result);
-}
-
-function verificarCredenciales(username, password) {
-  var ss   = SpreadsheetApp.getActiveSpreadsheet();
-  var hoja = ss.getSheetByName("Usuarios");
-  if (!hoja) return "null";
-
-  var lastRow = hoja.getLastRow();
-  if (lastRow < 2) return "null"; // no hay datos
-
-  // A: usuario, B: contraseña, C: URL, D: portal activo (checkbox)
-  var datos = hoja.getRange("A2:D" + lastRow).getValues();
-
-  for (var i = 0; i < datos.length; i++) {
-    var user        = String(datos[i][0] || "").trim();
-    var pass        = String(datos[i][1] || "");
-    var url         = String(datos[i][2] || "");
-    var portalCell  = datos[i][3]; // columna D
-
-    if (user === username && pass === password) {
-      // Si el portal NO está activo, se rechaza acceso
-      if (!esActivo(portalCell)) {
-        return "null";
-      }
-      // Portal activo → devolver URL
-      return url || "null";
-    }
-  }
-
-  return "null"; // credenciales inválidas o usuario no encontrado
-}
-
-/**
- * Interpreta el valor de la columna D como activo / no activo.
- * Acepta checkbox TRUE, 1, "TRUE", "1", "sí", etc.
- */
-function esActivo(v) {
-  if (v === true) return true;
-  var s = String(v || "").trim().toLowerCase();
-  if (!s) return false;
-  return (s === "1" || s === "true" || s === "si" || s === "sí" || s === "yes" || s === "on");
 }

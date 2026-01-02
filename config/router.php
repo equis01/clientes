@@ -69,9 +69,6 @@ switch(rtrim($uri,'/')){
   case '/users/login':
     header('Location: /login'); exit;
     break;
-  case '/logout':
-    $b=dirname(__DIR__); $p=$b.'/views/pages/shared/logout.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/logout.php'; }
-    break;
   case '/servicios':
     header('Location: /users/servicios'); exit;
     break;
@@ -110,6 +107,12 @@ switch(rtrim($uri,'/')){
     break;
   case '/auth':
     require dirname(__DIR__).'/config/auth.php';
+    break;
+  case '/auth/callback':
+    require dirname(__DIR__).'/views/pages/shared/auth_callback.php';
+    break;
+  case '/logout':
+    require dirname(__DIR__).'/views/pages/shared/logout.php';
     break;
   case '/theme':
     require dirname(__DIR__).'/config/theme.php';
