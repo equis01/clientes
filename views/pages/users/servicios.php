@@ -64,8 +64,14 @@ $mes=isset($_GET['mes'])?trim($_GET['mes']):'';
 $anio=isset($_GET['anio'])?trim($_GET['anio']):'';
 $todoAnio=(isset($_GET['mes']) && strtolower(trim($_GET['mes']))==='anual');
 $now=new DateTime('now', new DateTimeZone($tz));
-$currentYear=$now->format('Y');
-if($anio===''){$anio=$currentYear;} else {$anio=$currentYear;}
+$realYear=(int)$now->format('Y');
+$realMonth=(int)$now->format('m');
+$realDay=(int)$now->format('d');
+// El año cambia hasta el 10 de enero
+if($realMonth===1 && $realDay<10){ $currentYear=(string)($realYear-1); }
+else{ $currentYear=(string)$realYear; }
+
+if($anio===''){$anio=$currentYear;}
 if(!$todoAnio && $mes===''){
   $day=(int)$now->format('d');
   $m=(int)$now->format('m');
@@ -87,6 +93,15 @@ $raw=$res['raw'];
 $method=$res['method'];
 $gasPublic=$res['public_url'];
 $gasReal=$res['url'];
+
+$totalM3=0;
+$totalKg=0;
+foreach($rows as $r){
+  $q=isset($r['q'])?str_replace(',','.',$r['q']):0;
+  $s=isset($r['s'])?str_replace(',','.',$r['s']):0;
+  $totalM3+=(float)$q;
+  $totalKg+=(float)$s;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -102,6 +117,9 @@ $gasReal=$res['url'];
       <?php if(!empty($periodo['activo'])){ ?>
         <div>Periodo: <?php echo htmlspecialchars($todoAnio?('Año '.$anio):(($periodo['mesTexto']?:'') . ' ' . ($periodo['anio']?:''))); ?></div>
       <?php } ?>
+      <div style="font-weight:600;margin-top:4px">
+        Total m³: <?php echo fmt_decimal($totalM3,1); ?> &nbsp;|&nbsp; Total Kg: <?php echo fmt_decimal($totalKg,1); ?>
+      </div>
       <form method="get" action="/users/servicios" class="filter">
         <?php $meses=[1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre']; ?>
         <div class="field">

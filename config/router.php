@@ -93,6 +93,12 @@ switch(rtrim($uri,'/')){
   case '/users/configuracion':
     $b=dirname(__DIR__); $p=$b.'/views/pages/users/configuracion.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/configuracion.php'; }
     break;
+  case '/users/manual':
+    $b=dirname(__DIR__); require $b.'/views/pages/users/manual.php';
+    break;
+  case '/users/google_manual':
+    $b=dirname(__DIR__); require $b.'/views/pages/users/google_manual.php';
+    break;
   case '/users/configuración':
     $b=dirname(__DIR__); $p=$b.'/views/pages/users/configuracion.php'; if(is_file($p)){ require $p; } else { require $b.'/views/pages/configuracion.php'; }
     break;

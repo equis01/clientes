@@ -91,6 +91,18 @@ main{flex:1 0 auto}
 }
 @media (min-width:769px){
   .card{width:720px}
+  header .topbar {
+    position: relative;
+    justify-content: space-between;
+  }
+  header nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    margin: 0;
+    flex: initial;
+  }
 }
 @media (max-width:480px){
   header img{width:120px;height:auto}

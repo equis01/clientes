@@ -6,11 +6,17 @@
 </head>
 <body>
   <?php include dirname(__DIR__,2).'/layout/header.php'; ?>
-  <main class="container">
+  <main class="container" style="display: flex; flex-direction: column; gap: 20px;">
     <div class="card">
       <h2 class="title">Portal</h2>
       <ul>
         <li><a id="driveLink" href="<?php echo htmlspecialchars($folder); ?>" target="_blank">Carpeta integral</a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2 class="title">Manual</h2>
+      <ul>
+        <li><a href="/users/manual" style="color: #00DC2A; font-weight: 600;">Manual de usuario</a></li>
       </ul>
     </div>
   </main>
@@ -24,9 +30,12 @@
         <ul>
           <?php if(count($emailsList)===0){ ?><li>Sin correos registrados</li><?php } else { foreach($emailsList as $em){ ?><li><?php echo htmlspecialchars($em); ?></li><?php } } ?>
         </ul>
+        <p>
+            Si tienes dudas sobre el uso de la plataforma, consulta el <a href="/users/manual" target="_blank" style="color:#00DC2A;">Manual de Usuario</a>.
+        </p>
         Si necesitas ayuda para crear una Cuenta de Google con tu correo corporativo, puedes usar esta guía:
         <br>
-        <a href="https://www.davirbonilla.com/como-crear-una-cuenta-de-google-desde-correo-corporativo/" target="_blank">Cómo crear una Cuenta de Google con tu correo corporativo</a>.
+        <a href="/users/google_manual" target="_blank">Cómo crear una Cuenta de Google con tu correo corporativo</a>.
       </div>
       <div class="actions">
         <button type="button" class="btn" id="driveInfoContinue">Continuar</button>
