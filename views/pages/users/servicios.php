@@ -67,8 +67,8 @@ $now=new DateTime('now', new DateTimeZone($tz));
 $realYear=(int)$now->format('Y');
 $realMonth=(int)$now->format('m');
 $realDay=(int)$now->format('d');
-// El año cambia hasta el 10 de enero
-if($realMonth===1 && $realDay<10){ $currentYear=(string)($realYear-1); }
+// El año cambia hasta el 15 de enero
+if($realMonth===1 && $realDay<16){ $currentYear=(string)($realYear-1); }
 else{ $currentYear=(string)$realYear; }
 
 if($anio===''){$anio=$currentYear;}
@@ -191,6 +191,19 @@ foreach($rows as $r){
       <div class="actions"><button type="button" class="btn" id="btnCerrarReporte">Cerrar</button></div>
     </div>
   </div>
+  <?php if($realMonth===1 && $realDay<16){ ?>
+  <div id="yearEndModal" class="modal" style="display:flex">
+    <div class="modal-content">
+      <div class="modal-title">Aviso de Cierre Anual</div>
+      <p style="margin:10px 0;line-height:1.5">
+        Estimado cliente, por motivos de cierre administrativo anual, la información visible de manera predeterminada corresponderá al año anterior hasta el día <strong>15 de enero del presente año</strong>.
+      </p>
+      <div class="actions">
+        <button type="button" class="btn" onclick="document.getElementById('yearEndModal').style.display='none'">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  <?php } ?>
   <script>
   (function(){
     var form=document.querySelector('form.filter');

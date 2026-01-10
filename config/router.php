@@ -25,6 +25,33 @@ $file=dirname(__DIR__).$uri;
 if($uri!==null && $uri!=='/' && is_file($file)){
   return false;
 }
+
+// Enrutamiento para API
+if (strpos($uri, '/api/') === 0) {
+    $apiName = substr($uri, 5); // remove /api/
+    $apiBase = dirname(__DIR__) . '/../api/';
+    $apiFile = $apiBase . $apiName;
+    
+    // Prevent traversal
+    if (strpos($apiName, '..') !== false) {
+        http_response_code(403);
+        exit;
+    }
+
+    if (is_file($apiFile)) {
+        require $apiFile;
+        exit;
+    }
+    if (is_file($apiFile . '.php')) {
+        require $apiFile . '.php';
+        exit;
+    }
+    
+    http_response_code(404);
+    echo json_encode(['ok' => false, 'error' => 'API endpoint not found']);
+    exit;
+}
+
 // Si es admin, restringir acceso solo a rutas /admin y acciones necesarias
 if(isset($_SESSION['is_admin']) && $_SESSION['is_admin']){
   $allowed=[
