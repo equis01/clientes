@@ -2,11 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once dirname(__DIR__, 3) . '/lib/env.php';
 
-// TODO: Estos valores deben ser reemplazados por los reales obtenidos al registrar el cliente en el IdP.
-$clientId = '29f68cfc376872bdd70d'; 
-$clientSecret = '52b66a6e8ae852690e10374304a47ccb82574e67';
-$idpUrl = 'https://pruebas.mediosconvalor.com';
+$clientId = env('MCV_CLIENT_ID','');
+$clientSecret = env('MCV_CLIENT_SECRET','');
+$idpUrl = env('MCV_IDP_URL','https://acc.mediosconvalor.com');
 
 // Validar estado para prevenir CSRF
 if (empty($_GET['state']) || empty($_SESSION['oauth_state']) || $_GET['state'] !== $_SESSION['oauth_state']) {
@@ -125,6 +125,13 @@ if ($t) {
 
 $_SESSION['mcv_uid'] = $userData['sub'];
 $_SESSION['mcv_token'] = $accessToken;
+
+if (isset($_SESSION['login_return_to']) && !empty($_SESSION['login_return_to'])) {
+    $returnTo = $_SESSION['login_return_to'];
+    unset($_SESSION['login_return_to']);
+    header('Location: ' . $returnTo);
+    exit;
+}
 
 header('Location: /admin');
 exit;

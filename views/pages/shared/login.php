@@ -1,16 +1,22 @@
 <?php 
 if(session_status()!==PHP_SESSION_ACTIVE){ session_start(); } 
 if(isset($_SESSION['user'])){header('Location: /users');exit;} 
+require_once dirname(__DIR__,3).'/lib/env.php';
 
 // Configuración MCV Accounts
-$clientId = '29f68cfc376872bdd70d'; 
+$clientId = env('MCV_CLIENT_ID',''); 
 $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
 // Forzar HTTPS si estamos en el dominio de producción
 if (strpos($_SERVER['HTTP_HOST'], 'clientes.mediosconvalor.com') !== false) {
     $protocol = 'https';
 }
 $redirectUri = $protocol . "://" . $_SERVER['HTTP_HOST'] . "/auth/callback";
-$idpBaseUrl = 'https://pruebas.mediosconvalor.com';
+$idpBaseUrl = env('MCV_IDP_URL','https://acc.mediosconvalor.com');
+
+// Guardar URL de retorno si existe
+if (isset($_GET['return_to'])) {
+    $_SESSION['login_return_to'] = $_GET['return_to'];
+}
 
 // Generar estado anti-CSRF
 if (empty($_SESSION['oauth_state'])) {
@@ -130,6 +136,9 @@ $client='';
       measurementId:"G-4F1FPMDRCR"
     };
     firebase.initializeApp(window.firebaseConfig);
+  </script>
+  <script>
+    window.returnTo = "<?php echo isset($_SESSION['login_return_to']) ? htmlspecialchars($_SESSION['login_return_to']) : ''; ?>";
   </script>
   <script src="/assets/js/login.js"></script>
 </body>

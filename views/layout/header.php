@@ -12,6 +12,7 @@
     </button>
     <nav>
       <button class="nav-close" id="navClose" aria-label="Cerrar menú"><img src="/assets/icons/x.svg" alt="" aria-hidden="true"></button>
+      <?php if(!empty($_SESSION['user'])){ ?>
       <div class="nav-user"><?php echo htmlspecialchars($displayName); ?></div>
       <?php if(!$isAdmin){ ?>
         <a href="/users" class="<?php echo $isPortal?'active':''; ?>">Portal</a>
@@ -31,6 +32,9 @@
         <?php } ?>
       <?php } ?>
       <a href="/logout">Salir</a>
+      <?php } else { ?>
+      <a href="/users/login?return_to=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>">Iniciar Sesión</a>
+      <?php } ?>
     </nav>
     <div class="client" style="margin-left:auto;font-weight:600"><?php echo htmlspecialchars($displayName); ?></div>
   </div>

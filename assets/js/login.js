@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded',function(){
     })
     .then(function(data){
       if(data&&data.ok){
+        if(window.returnTo && window.returnTo.length > 0){ window.location.href=window.returnTo; return; }
         var uname=document.getElementById('username').value.trim();
         if(data.admin){ window.location.href='/admin'; return; }
         window.location.href='/users';
@@ -38,7 +39,10 @@ document.addEventListener('DOMContentLoaded',function(){
         fetch('/auth',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:bodyAdmin})
           .then(function(r2){ return r2.json(); })
           .then(function(d2){
-            if(d2 && d2.ok && d2.admin){ window.location.href='/admin'; }
+            if(d2 && d2.ok && d2.admin){ 
+              if(window.returnTo && window.returnTo.length > 0){ window.location.href=window.returnTo; return; }
+              window.location.href='/admin'; 
+            }
             else {
               if(data && data.code==='portal_disabled'){
                 var m=document.getElementById('portalModal'); var c=document.getElementById('portalClose');
