@@ -1,0 +1,640 @@
+Quiero hacer un formulario en una web, que llegue a Sheets mediante Google AppScript, pero en la versión de prueba, no va a dejar hacer pruebas con localhost. ¿Hay manera de que cree un documento que procese la información en backend y que lo envía a AppScript? Así para que genere tráfico a mi web y para procesar, o desviar CORS.
+
+¿Se puede?
+
+Sí se puede, y hay varias formas “correctas” de hacerlo sin depender de localhost y sin pelearte con CORS. La idea es que tu navegador no le pegue directo al Apps Script, sino que le pegue a un backend tuyo (o a un proxy), y ese backend ya llama a Apps Script (server-to-server). Ahí CORS deja de ser problema.
+
+Aquí van 4 opciones, de más simple a más robusta:
+
+Opción 1) Backend/proxy (recomendado)
+
+Flujo: Web → tu backend (dominio real o túnel) → Apps Script → Google Sheets
+
+Tu web manda POST JSON a /api/form.
+
+Tu backend valida, sanitiza, agrega IP/user-agent si quieres, rate limit, etc.
+
+Tu backend hace fetch al Web App de Apps Script (o a un endpoint alterno) y listo.
+
+✅ Pros:
+
+Sin CORS (porque el llamado a Apps Script lo hace el servidor).
+
+Puedes tener logs, seguridad, throttling, reintentos.
+
+Controlas tráfico y analítica.
+
+⚠️ Contras:
+
+Necesitas un backend (Cloud Run, Vercel, Render, Fly.io, tu VPS, etc.).
+
+Opción 2) Túnel para “localhost” (solución rápida para pruebas)
+
+Si el problema es que “no deja” por localhost, normalmente es por:
+
+Orígenes no permitidos / OAuth redirect URI
+
+HTTPS requerido
+
+CORS con origin http://localhost
+
+Solución típica: ngrok / Cloudflare Tunnel / localtunnel para darte un dominio HTTPS temporal:
+
+Tu “localhost” se vuelve https://xxxxx.ngrok-free.app
+
+Ya pruebas como si fuera producción
+
+✅ Pros:
+
+Casi cero cambios.
+
+Ideal para pruebas.
+
+⚠️ Contras:
+
+Sigue siendo navegador → Apps Script (CORS puede aparecer según cómo lo hagas).
+
+No es la arquitectura final más limpia.
+
+Opción 3) Publicar Apps Script como Web App y resolver CORS en el mismo Script
+
+Puedes publicar Apps Script como Web App y responder con headers CORS adecuados.
+
+Peeeero ojo: aunque pongas headers, a veces el preflight (OPTIONS) y ciertos modos de deploy dan lata. Además, si lo dejas abierto, te expones a spam.
+
+✅ Pros:
+
+Sin backend extra.
+
+⚠️ Contras:
+
+Seguridad limitada si no agregas tokens/firmas.
+
+Te pueden spamear el Sheet.
+
+CORS/preflight puede seguir molestando.
+
+Opción 4) No usar Web App: escribir a Sheets desde backend con Service Account
+
+Flujo: Web → backend → Google Sheets API (Service Account)
+
+Aquí ya ni Apps Script es necesario.
+
+Tu backend escribe directo a Sheets con Google Sheets API.
+
+Si quieres lógica extra, la haces en backend o con Apps Script como “post-proceso”.
+
+✅ Pros:
+
+Muy robusto y escalable.
+
+Seguridad fuerte.
+
+⚠️ Contras:
+
+Configurar Google Cloud + permisos + service account.
+
+Qué te conviene (en tu caso)
+
+Por lo que dices (“generar tráfico a mi web” + “procesar en backend” + “desviar CORS”), la mejor es:
+
+✅ Opción 1: tu backend como intermediario
+y, para pruebas, combínalo con:
+✅ Opción 2: ngrok/cloudflare tunnel (si aún no tienes un dominio de dev)
+
+Así:
+
+El formulario pega a tu backend (mismo dominio) → cero CORS.
+
+Tu backend pega a Apps Script → también cero CORS.
+
+Puedes controlar seguridad y evitar basura.
+
+Detalles importantes de seguridad (para que no te rompan el Sheet)
+
+Si usas Apps Script Web App, NO lo dejes “abierto” sin control. Lo mínimo:
+
+Que el backend mande un token secreto (por header o campo) y Apps Script lo valide.
+
+O mejor: una firma HMAC (el backend firma el body con un secreto, Apps Script verifica).
+
+Rate limit del lado del backend.
+
+Implementación típica (arquitectura)
+
+Formulario (Front):
+
+POST /api/form (misma web/dominio)
+
+Backend:
+
+Valida y normaliza datos
+
+fetch(https://script.google.com/macros/s/.../exec) con secreto
+
+Apps Script:
+
+Valida secreto
+
+Inserta fila en Sheets
+
+Responde JSON
+
+Si me dices con qué stack estás (¿PHP en tu hosting? ¿Node en Vercel? ¿Firebase Functions? ¿Cloud Run?), te paso un ejemplo completo copy-paste:
+
+endpoint backend
+
+Apps Script doPost
+
+y el fetch del front
+
+Pero sí: se puede, y hacerlo con backend intermedio es lo más limpio para CORS + pruebas + seguridad.
+
+formulario - personas fisicas.pdf
+PDF
+formulario - personas morales.pdf
+PDF
+¿Puedes darme una propuesta del GAS y el proxy en php para esto en una hoja de cálculo (lo de drive aún no. solo lo que es texto)?
+Thought for 4 seconds
+
+Sí. Te dejo una propuesta completa (GAS + proxy PHP) para que tu web mande el formulario a tu PHP (mismo dominio) y ese PHP lo reenvíe a tu Apps Script Web App, y finalmente se guarde en Google Sheets.
+
+Incluyo campos basados en tus formatos de Personas Físicas y Personas Morales (contactos, facturación/pagos y el bloque “info constitutiva” para morales). 
+
+formulario - personas fisicas
+
+ 
+
+formulario - personas morales
+
+1) Google Apps Script (Web App) → guarda en Google Sheets
+A) Estructura de la hoja
+
+Crea una hoja llamada (por ejemplo): REGISTROS
+
+Encabezados sugeridos (fila 1). Puedes copiarlos tal cual:
+
+timestamp
+
+id
+
+tipo_persona (FISICA / MORAL)
+
+nombre_comercial_punto_estacion
+
+nombre_fiscal
+
+rfc
+
+regimen_fiscal
+
+direccion_fiscal
+
+estado_fiscal
+
+municipio_fiscal
+
+codigo_postal
+
+direccion_servicio
+
+telefonos
+
+Contacto recolección
+
+contacto_recoleccion_nombre
+
+contacto_recoleccion_telefono
+
+contacto_recoleccion_correo
+
+Contacto compras
+
+contacto_compras_nombre
+
+contacto_compras_telefono
+
+contacto_compras_correo
+
+Contacto pagos
+
+contacto_pagos_nombre
+
+contacto_pagos_telefono
+
+contacto_pagos_correo
+
+Facturas y pagos
+
+correo_envio_factura
+
+uso_cfdi
+
+metodo_pago
+
+forma_pago
+
+banco
+
+ultimos4_cuenta
+
+clabe
+
+sucursal
+
+Info constitutiva (solo moral)
+
+representante_legal
+
+escritura_publica_numero
+
+tipo_tomo_volumen
+
+tomo_volumen
+
+fecha_constitutiva
+
+notaria_publica_numero
+
+notario_publico_titular
+
+registrada_bajo_inscripcion_numero
+
+escriturado_en_estado_de
+
+Adicional
+
+comentarios_adicionales
+
+plataforma_subir_facturas
+
+Meta (opcional)
+
+source_url
+
+user_agent
+
+ip
+
+Ojo: en Apps Script no siempre podrás leer IP real; la pongo como campo por si tu PHP la manda.
+
+B) Código GAS (pegar completo en Code.gs)
+
+Cambia SPREADSHEET_ID, SHEET_NAME y SHARED_SECRET.
+
+/** ====== CONFIG ====== */
+const SPREADSHEET_ID = 'PON_AQUI_TU_ID_DE_SHEET';
+const SHEET_NAME = 'REGISTROS';
+
+// Secreto compartido con tu proxy PHP (mínimo 32 chars)
+const SHARED_SECRET = 'CAMBIA_ESTE_SECRETO_LARGO_Y_UNICO';
+
+/** ====== HELPERS ====== */
+function jsonResponse(obj, code = 200) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function normalizeString(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).trim();
+}
+
+function safeUpper(v) {
+  return normalizeString(v).toUpperCase();
+}
+
+function genId() {
+  // ID corto y legible: yyyyMMdd-HHmmss-XXXX
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const stamp =
+    d.getFullYear() +
+    pad(d.getMonth() + 1) +
+    pad(d.getDate()) + '-' +
+    pad(d.getHours()) +
+    pad(d.getMinutes()) +
+    pad(d.getSeconds());
+
+  const rand = Math.random().toString(16).slice(2, 6).toUpperCase();
+  return `${stamp}-${rand}`;
+}
+
+function getSheet_() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) throw new Error(`No existe la hoja "${SHEET_NAME}"`);
+  return sh;
+}
+
+function getHeaderMap_(sheet) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const map = {};
+  headers.forEach((h, i) => {
+    const key = normalizeString(h);
+    if (key) map[key] = i + 1; // 1-based col index
+  });
+  return map;
+}
+
+/** ====== MAIN ENDPOINT ====== */
+function doPost(e) {
+  try {
+    // 1) Parse body
+    const raw = e && e.postData && e.postData.contents ? e.postData.contents : '';
+    if (!raw) return jsonResponse({ ok: false, error: 'Body vacío' }, 400);
+
+    let payload;
+    try {
+      payload = JSON.parse(raw);
+    } catch (err) {
+      return jsonResponse({ ok: false, error: 'JSON inválido' }, 400);
+    }
+
+    // 2) Auth simple por secreto compartido
+    const secret = normalizeString(payload.secret);
+    if (!secret || secret !== SHARED_SECRET) {
+      return jsonResponse({ ok: false, error: 'No autorizado' }, 401);
+    }
+
+    // 3) Campos base
+    const tipo = safeUpper(payload.tipo_persona); // FISICA / MORAL
+    if (tipo !== 'FISICA' && tipo !== 'MORAL') {
+      return jsonResponse({ ok: false, error: 'tipo_persona debe ser FISICA o MORAL' }, 400);
+    }
+
+    const id = genId();
+    const ts = new Date();
+
+    // 4) Armar objeto final (keys deben existir como headers en tu Sheet)
+    const rowObj = {
+      timestamp: ts,
+      id: id,
+      tipo_persona: tipo,
+
+      nombre_comercial_punto_estacion: normalizeString(payload.nombre_comercial_punto_estacion),
+      nombre_fiscal: normalizeString(payload.nombre_fiscal),
+      rfc: normalizeString(payload.rfc),
+      regimen_fiscal: normalizeString(payload.regimen_fiscal),
+      direccion_fiscal: normalizeString(payload.direccion_fiscal),
+      estado_fiscal: normalizeString(payload.estado_fiscal),
+      municipio_fiscal: normalizeString(payload.municipio_fiscal),
+      codigo_postal: normalizeString(payload.codigo_postal),
+      direccion_servicio: normalizeString(payload.direccion_servicio),
+      telefonos: normalizeString(payload.telefonos),
+
+      contacto_recoleccion_nombre: normalizeString(payload.contacto_recoleccion_nombre),
+      contacto_recoleccion_telefono: normalizeString(payload.contacto_recoleccion_telefono),
+      contacto_recoleccion_correo: normalizeString(payload.contacto_recoleccion_correo),
+
+      contacto_compras_nombre: normalizeString(payload.contacto_compras_nombre),
+      contacto_compras_telefono: normalizeString(payload.contacto_compras_telefono),
+      contacto_compras_correo: normalizeString(payload.contacto_compras_correo),
+
+      contacto_pagos_nombre: normalizeString(payload.contacto_pagos_nombre),
+      contacto_pagos_telefono: normalizeString(payload.contacto_pagos_telefono),
+      contacto_pagos_correo: normalizeString(payload.contacto_pagos_correo),
+
+      correo_envio_factura: normalizeString(payload.correo_envio_factura),
+      uso_cfdi: normalizeString(payload.uso_cfdi),
+      metodo_pago: normalizeString(payload.metodo_pago),
+      forma_pago: normalizeString(payload.forma_pago),
+      banco: normalizeString(payload.banco),
+      ultimos4_cuenta: normalizeString(payload.ultimos4_cuenta),
+      clabe: normalizeString(payload.clabe),
+      sucursal: normalizeString(payload.sucursal),
+
+      // Info constitutiva (moral)
+      representante_legal: normalizeString(payload.representante_legal),
+      escritura_publica_numero: normalizeString(payload.escritura_publica_numero),
+      tipo_tomo_volumen: normalizeString(payload.tipo_tomo_volumen), // "tomo" o "volumen"
+      tomo_volumen: normalizeString(payload.tomo_volumen),
+      fecha_constitutiva: normalizeString(payload.fecha_constitutiva),
+      notaria_publica_numero: normalizeString(payload.notaria_publica_numero),
+      notario_publico_titular: normalizeString(payload.notario_publico_titular),
+      registrada_bajo_inscripcion_numero: normalizeString(payload.registrada_bajo_inscripcion_numero),
+      escriturado_en_estado_de: normalizeString(payload.escriturado_en_estado_de),
+
+      comentarios_adicionales: normalizeString(payload.comentarios_adicionales),
+      plataforma_subir_facturas: normalizeString(payload.plataforma_subir_facturas),
+
+      // Meta
+      source_url: normalizeString(payload.source_url),
+      user_agent: normalizeString(payload.user_agent),
+      ip: normalizeString(payload.ip),
+    };
+
+    // 5) Insertar en hoja usando headers (no por posiciones fijas)
+    const sh = getSheet_();
+    const headerMap = getHeaderMap_(sh);
+
+    // Si la hoja está vacía o sin headers, avisa
+    if (!headerMap || Object.keys(headerMap).length === 0) {
+      return jsonResponse({ ok: false, error: 'La hoja no tiene encabezados en la fila 1' }, 500);
+    }
+
+    // Prepara una fila con el tamaño de lastColumn y rellena por header name
+    const lastCol = sh.getLastColumn();
+    const row = new Array(lastCol).fill('');
+
+    Object.keys(rowObj).forEach((key) => {
+      const col = headerMap[key];
+      if (col) row[col - 1] = rowObj[key];
+    });
+
+    sh.appendRow(row);
+
+    return jsonResponse({ ok: true, id });
+
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err && err.message ? err.message : err) }, 500);
+  }
+}
+C) Despliegue
+
+En Apps Script:
+
+Deploy > New deployment
+
+Type: Web app
+
+Execute as: Me
+
+Who has access: Anyone (si vas a usar secreto) o “Anyone with link”
+
+Copia la URL /exec
+
+2) Proxy en PHP (backend) → recibe del navegador y reenvía a GAS
+Objetivo
+
+Tu front hace POST https://tu-dominio.com/api/form.php
+y form.php reenvía a Apps Script.
+
+✅ Ventaja: tu front y tu PHP están en el mismo dominio → sin CORS (o CORS fácil).
+
+A) api/form.php (proxy + validación básica + reenvío)
+
+Cambia GAS_WEBAPP_URL y SHARED_SECRET (debe ser EXACTAMENTE el mismo que en GAS)
+
+<?php
+declare(strict_types=1);
+
+// ===== CONFIG =====
+const GAS_WEBAPP_URL = 'PON_AQUI_TU_URL_DE_WEBAPP_APPS_SCRIPT_EXEC';
+const SHARED_SECRET = 'CAMBIA_ESTE_SECRETO_LARGO_Y_UNICO'; // igual que en GAS
+
+header('Content-Type: application/json; charset=utf-8');
+
+// (Opcional) Si tu front está en otro dominio, habilita CORS aquí.
+// Si estás en el MISMO dominio, ni lo necesitas.
+/*
+$allowedOrigin = 'https://tu-dominio.com';
+if (!empty($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN'] === $allowedOrigin) {
+  header("Access-Control-Allow-Origin: $allowedOrigin");
+  header("Access-Control-Allow-Methods: POST, OPTIONS");
+  header("Access-Control-Allow-Headers: Content-Type");
+}
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
+*/
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  http_response_code(405);
+  echo json_encode(['ok' => false, 'error' => 'Método no permitido']);
+  exit;
+}
+
+// 1) Lee JSON del cliente
+$raw = file_get_contents('php://input') ?: '';
+if ($raw === '') {
+  http_response_code(400);
+  echo json_encode(['ok' => false, 'error' => 'Body vacío']);
+  exit;
+}
+
+$clientPayload = json_decode($raw, true);
+if (!is_array($clientPayload)) {
+  http_response_code(400);
+  echo json_encode(['ok' => false, 'error' => 'JSON inválido']);
+  exit;
+}
+
+// 2) Validación mínima (ajústala a tu gusto)
+$tipo = strtoupper(trim((string)($clientPayload['tipo_persona'] ?? '')));
+if ($tipo !== 'FISICA' && $tipo !== 'MORAL') {
+  http_response_code(422);
+  echo json_encode(['ok' => false, 'error' => 'tipo_persona debe ser FISICA o MORAL']);
+  exit;
+}
+
+$nombreFiscal = trim((string)($clientPayload['nombre_fiscal'] ?? ''));
+$rfc = trim((string)($clientPayload['rfc'] ?? ''));
+if ($nombreFiscal === '' || $rfc === '') {
+  http_response_code(422);
+  echo json_encode(['ok' => false, 'error' => 'nombre_fiscal y rfc son obligatorios']);
+  exit;
+}
+
+// 3) Enriquecer con meta (IP/UA/URL)
+$ip = $_SERVER['REMOTE_ADDR'] ?? '';
+$ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+$sourceUrl = (string)($clientPayload['source_url'] ?? '');
+
+// 4) Payload final para GAS (agrega secreto)
+$payloadToGas = $clientPayload;
+$payloadToGas['tipo_persona'] = $tipo;
+$payloadToGas['secret'] = SHARED_SECRET;
+$payloadToGas['ip'] = $ip;
+$payloadToGas['user_agent'] = $ua;
+$payloadToGas['source_url'] = $sourceUrl;
+
+// 5) Enviar a Apps Script
+$ch = curl_init(GAS_WEBAPP_URL);
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_POST => true,
+  CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+  CURLOPT_POSTFIELDS => json_encode($payloadToGas, JSON_UNESCAPED_UNICODE),
+  CURLOPT_TIMEOUT => 15,
+]);
+
+$response = curl_exec($ch);
+$errno = curl_errno($ch);
+$error = curl_error($ch);
+$httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($errno !== 0) {
+  http_response_code(502);
+  echo json_encode(['ok' => false, 'error' => 'Error al conectar con GAS', 'detail' => $error]);
+  exit;
+}
+
+// 6) Reenviar respuesta del GAS tal cual (o mapearla)
+http_response_code($httpCode ?: 200);
+echo $response !== false ? $response : json_encode(['ok' => false, 'error' => 'Respuesta vacía de GAS']);
+3) Ejemplo de JSON que mandaría tu front al PHP
+
+Tu front le manda esto a /api/form.php (sin secret; eso lo agrega el PHP).
+
+{
+  "tipo_persona": "FISICA",
+  "nombre_comercial_punto_estacion": "Sucursal Centro",
+  "nombre_fiscal": "Juan Perez",
+  "rfc": "PEPJ8001019Q8",
+  "regimen_fiscal": "605 Sueldos y salarios",
+  "direccion_fiscal": "Calle 1 #123",
+  "estado_fiscal": "Queretaro",
+  "municipio_fiscal": "Queretaro",
+  "codigo_postal": "76000",
+  "direccion_servicio": "Calle 2 #456",
+  "telefonos": "4421234567",
+
+  "contacto_recoleccion_nombre": "Juan Perez",
+  "contacto_recoleccion_telefono": "4421111111",
+  "contacto_recoleccion_correo": "jp@mail.com",
+
+  "contacto_compras_nombre": "Ana Compras",
+  "contacto_compras_telefono": "4422222222",
+  "contacto_compras_correo": "compras@mail.com",
+
+  "contacto_pagos_nombre": "Luis Pagos",
+  "contacto_pagos_telefono": "4423333333",
+  "contacto_pagos_correo": "pagos@mail.com",
+
+  "correo_envio_factura": "facturas@mail.com",
+  "uso_cfdi": "G03",
+  "metodo_pago": "PUE",
+  "forma_pago": "03 Transferencia",
+  "banco": "BBVA",
+  "ultimos4_cuenta": "1234",
+  "clabe": "012345678901234567",
+  "sucursal": "Centro",
+
+  "comentarios_adicionales": "Sin comentarios",
+  "plataforma_subir_facturas": "No"
+}
+
+Para MORAL, agregas el bloque constitutivo (de tu formato). 
+
+formulario - personas morales
+
+4) Recomendación rápida (para que no te lo spameen)
+
+Con esto ya tienes “puerta” segura por secreto, pero te recomiendo además:
+
+En PHP: rate limit (por IP) o captcha si se vuelve público.
+
+Validar RFC con regex básica (opcional).
+
+Guardar también timestamp en PHP (por si luego comparas).
+
+Si me confirmas:
+
+ID del Sheet y nombre exacto de tu hoja (REGISTROS u otro),
+
+qué campos quieres “obligatorios” sí o sí,
+
+y si tu web es PHP puro o framework,
+
+te lo dejo ya “aterrizado” a tu estructura final (headers exactos y validaciones completas).

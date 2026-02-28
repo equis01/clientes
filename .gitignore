@@ -4,3 +4,4 @@ data/*
 vendor/
 node_modules/
 backup/*
+scripts/*
